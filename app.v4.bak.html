@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VideoPro v4</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0f0f0f;
+      --bg2:      #181818;
+      --bg3:      #232323;
+      --bg4:      #2c2c2c;
+      --acc:      #ff6b35;
+      --acc-h:    #ff8050;
+      --danger:   #c0392b;
+      --ok:       #27ae60;
+      --t1:       #e8e8e8;
+      --t2:       #999;
+      --bdr:      #303030;
+      --sidebar-w: 300px;
+    }
+    body.light {
+      --bg: #f0f0f0; --bg2: #ffffff; --bg3: #f7f7f7; --bg4: #e8e8e8;
+      --t1: #181818; --t2: #666; --bdr: #d0d0d0;
+    }
+
+    body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--t1); height:100vh; display:flex; flex-direction:column; overflow:hidden; }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width:5px; height:5px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:var(--bdr); border-radius:3px; }
+
+    /* ── HEADER ── */
+    header { background:var(--bg2); border-bottom:1px solid var(--bdr); padding:9px 14px; display:flex; align-items:center; gap:12px; flex-shrink:0; z-index:20; }
+    .logo { font-size:1.2rem; font-weight:800; color:var(--acc); white-space:nowrap; letter-spacing:-.5px; }
+    .logo b { color:var(--t1); }
+    .ver { font-size:.65rem; background:var(--acc); color:#fff; padding:1px 5px; border-radius:3px; margin-left:4px; vertical-align:middle; }
+
+    .sw { flex:1; max-width:340px; position:relative; }
+    .sw input { width:100%; background:var(--bg3); border:1px solid var(--bdr); border-radius:20px; padding:6px 12px 6px 32px; color:var(--t1); font-size:.85rem; outline:none; font-family:inherit; transition:border-color .2s; }
+    .sw input:focus { border-color:var(--acc); }
+    .sw-ico { position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--t2); pointer-events:none; }
+
+    .hr { margin-left:auto; display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+
+    /* ── BUTTONS ── */
+    .btn { display:inline-flex; align-items:center; gap:5px; padding:6px 12px; border:1px solid var(--bdr); border-radius:6px; background:var(--bg3); color:var(--t1); font-size:.82rem; font-family:inherit; cursor:pointer; white-space:nowrap; transition:background .15s,border-color .15s; }
+    .btn:hover { background:var(--bg4); }
+    .btn.pa { background:var(--acc); border-color:var(--acc); color:#fff; }
+    .btn.pa:hover { background:var(--acc-h); border-color:var(--acc-h); }
+    .btn.pd { background:transparent; border-color:var(--danger); color:var(--danger); }
+    .btn.pd:hover { background:var(--danger); color:#fff; }
+    .btn.ok { border-color:var(--ok); color:var(--ok); }
+    .btn.ok:hover { background:var(--ok); color:#fff; }
+    .btn.bulk { border-style:dashed; }
+    .ico { background:none; border:none; color:var(--t2); font-size:1.1rem; cursor:pointer; padding:4px 6px; border-radius:4px; line-height:1; }
+    .ico:hover { color:var(--t1); background:var(--bg3); }
+    .mini { background:none; border:1px solid var(--bdr); color:var(--t2); font-size:.72rem; cursor:pointer; padding:2px 6px; border-radius:4px; font-family:inherit; }
+    .mini:hover { background:var(--bg4); color:var(--t1); }
+
+    /* ── BANNER ── */
+    .banner { background:#0c1a0c; border-bottom:1px solid #2d6a2d; padding:7px 14px; display:flex; align-items:center; gap:10px; font-size:.83rem; flex-shrink:0; }
+    .banner p { flex:1; }
+    .banner strong { color:#5fb85f; }
+
+    /* ── MAIN ── */
+    .main { flex:1; display:flex; overflow:hidden; min-height:0; }
+
+    /* ── SIDEBAR ── */
+    .sidebar { width:var(--sidebar-w); min-width:180px; max-width:520px; display:flex; flex-direction:column; background:var(--bg2); border-right:1px solid var(--bdr); flex-shrink:0; overflow:hidden; transition:margin .2s; }
+    .sidebar.off { margin-left:calc(-1 * var(--sidebar-w)); }
+
+    /* playlist selector */
+    .pl-bar { display:flex; gap:5px; padding:7px 8px; border-bottom:1px solid var(--bdr); flex-shrink:0; overflow-x:auto; }
+    .pl-chip { padding:3px 10px; border:1px solid var(--bdr); border-radius:12px; font-size:.75rem; cursor:pointer; white-space:nowrap; background:var(--bg3); color:var(--t2); transition:.15s; }
+    .pl-chip:hover { border-color:var(--acc); color:var(--t1); }
+    .pl-chip.on { background:var(--acc); border-color:var(--acc); color:#fff; }
+    .pl-chip.add { border-style:dashed; }
+
+    /* tabs */
+    .tabs { display:flex; border-bottom:1px solid var(--bdr); flex-shrink:0; }
+    .tab { flex:1; padding:8px 4px; text-align:center; font-size:.78rem; cursor:pointer; border-bottom:2px solid transparent; color:var(--t2); }
+    .tab.on { border-bottom-color:var(--acc); color:var(--t1); font-weight:600; }
+    .badge { background:var(--acc); color:#fff; border-radius:8px; font-size:.65rem; padding:1px 5px; margin-left:3px; }
+
+    /* sort + filter */
+    .sb { padding:6px 8px; border-bottom:1px solid var(--bdr); display:flex; gap:6px; align-items:center; flex-shrink:0; flex-wrap:wrap; }
+    .sb label { font-size:.72rem; color:var(--t2); white-space:nowrap; }
+    .fsel { background:var(--bg3); border:1px solid var(--bdr); border-radius:4px; color:var(--t1); font-size:.75rem; padding:3px 6px; font-family:inherit; outline:none; flex:1; min-width:80px; }
+
+    /* tag filter bar */
+    .tf { padding:5px 8px; border-bottom:1px solid var(--bdr); display:flex; gap:4px; overflow-x:auto; flex-shrink:0; }
+    .tg { padding:2px 8px; border:1px solid var(--bdr); border-radius:10px; font-size:.7rem; cursor:pointer; white-space:nowrap; color:var(--t2); }
+    .tg:hover { border-color:var(--acc); color:var(--t1); }
+    .tg.on { background:var(--acc); border-color:var(--acc); color:#fff; }
+
+    /* cat filter */
+    .cat-row { display:flex; gap:4px; padding:5px 8px; overflow-x:auto; flex-shrink:0; border-bottom:1px solid var(--bdr); }
+    .chip { padding:2px 10px; border:1px solid var(--bdr); border-radius:10px; font-size:.72rem; cursor:pointer; white-space:nowrap; color:var(--t2); }
+    .chip:hover { border-color:var(--acc); color:var(--t1); }
+    .chip.on { background:var(--acc); border-color:var(--acc); color:#fff; }
+
+    /* video list */
+    .vl { flex:1; overflow-y:auto; min-height:0; }
+    .vi { display:flex; gap:8px; padding:8px 10px; cursor:pointer; border-bottom:1px solid var(--bdr); transition:background .12s; position:relative; align-items:flex-start; }
+    .vi:hover { background:var(--bg3); }
+    .vi.on { background:var(--bg4); }
+    .vi.dragging { opacity:.4; }
+    .vi.over { border-top:2px solid var(--acc); }
+    .vt { width:72px; height:42px; object-fit:cover; border-radius:4px; flex-shrink:0; background:var(--bg4); }
+    .vt-ph { width:72px; height:42px; border-radius:4px; background:var(--bg4); flex-shrink:0; display:flex; align-items:center; justify-content:center; color:var(--t2); font-size:1.1rem; }
+    .vi-info { flex:1; min-width:0; }
+    .vi-title { font-size:.82rem; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .vi-meta { font-size:.68rem; color:var(--t2); margin-top:2px; display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+    .wc { font-size:.68rem; color:var(--t2); }
+    .stars { color:#f5a623; font-size:.75rem; letter-spacing:-1px; cursor:pointer; }
+    .stars:hover { color:#f5a623; }
+    .vi-tags { display:flex; gap:3px; flex-wrap:wrap; margin-top:3px; }
+    .vt-chip { padding:1px 6px; background:var(--bg4); border:1px solid var(--bdr); border-radius:8px; font-size:.62rem; color:var(--t2); }
+    .vi-act { display:flex; gap:3px; flex-direction:column; align-items:flex-end; opacity:0; transition:opacity .1s; flex-shrink:0; }
+    .vi:hover .vi-act { opacity:1; }
+    .vi-now { position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--acc); border-radius:0 2px 2px 0; }
+
+    /* queue tag */
+    .q-num { position:absolute; top:4px; right:4px; background:var(--acc); color:#fff; font-size:.6rem; width:16px; height:16px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+
+    /* sidebar footer */
+    .sf { border-top:1px solid var(--bdr); flex-shrink:0; }
+    .sf-main { display:flex; gap:5px; padding:7px 8px; }
+    .sf-file { padding:5px 8px; border-top:1px solid var(--bdr); display:flex; flex-direction:column; gap:4px; }
+    .sf-file-btns { display:flex; gap:5px; }
+    .file-ind { font-size:.71rem; color:var(--ok); display:flex; align-items:center; gap:5px; overflow:hidden; }
+    .file-ind .fn { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+    /* resize handle */
+    .rsz { width:4px; background:transparent; cursor:col-resize; flex-shrink:0; transition:background .15s; }
+    .rsz:hover, .rsz.active { background:var(--acc); }
+
+    /* ── PLAYER ── */
+    .pcol { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
+    .ps { flex:1; background:#000; position:relative; overflow:hidden; min-height:0; }
+    .ps iframe { width:100%; height:100%; border:none; display:block; }
+    .ph { width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; color:var(--t2); }
+    .ph-ico { font-size:3rem; }
+    .ph-t { font-size:.9rem; }
+
+    /* queue indicator */
+    .q-banner { background:var(--bg3); border-top:1px solid var(--bdr); padding:4px 12px; font-size:.72rem; color:var(--t2); display:flex; align-items:center; gap:8px; flex-shrink:0; }
+
+    /* controls */
+    .ctrl { background:var(--bg2); border-top:1px solid var(--bdr); padding:8px 12px; display:flex; align-items:center; gap:8px; flex-shrink:0; flex-wrap:wrap; }
+    .now { flex:1; min-width:0; }
+    .now-t { font-size:.85rem; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .now-m { font-size:.72rem; color:var(--t2); margin-top:2px; display:flex; gap:8px; flex-wrap:wrap; }
+    .nav-btn { background:var(--bg3); border:1px solid var(--bdr); color:var(--t1); padding:5px 10px; border-radius:6px; cursor:pointer; font-size:.8rem; font-family:inherit; transition:.15s; }
+    .nav-btn:hover { background:var(--bg4); }
+    .nav-btn.on { border-color:var(--ok); color:var(--ok); }
+    .nav-btn.acc { border-color:var(--acc); color:var(--acc); }
+
+    /* ── STATS ── */
+    .stats-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:10px; padding:16px; }
+    .stat-card { background:var(--bg3); border:1px solid var(--bdr); border-radius:8px; padding:12px 14px; }
+    .stat-n { font-size:1.6rem; font-weight:700; color:var(--acc); }
+    .stat-l { font-size:.75rem; color:var(--t2); margin-top:2px; }
+    .top-list { padding:0 16px 16px; }
+    .top-list h3 { font-size:.85rem; color:var(--t2); margin-bottom:8px; }
+    .top-item { display:flex; align-items:center; gap:8px; padding:5px 0; border-bottom:1px solid var(--bdr); font-size:.8rem; }
+    .top-rank { width:20px; color:var(--acc); font-weight:700; flex-shrink:0; }
+
+    /* ── MODALS ── */
+    .ov { position:fixed; inset:0; background:rgba(0,0,0,.7); display:flex; align-items:center; justify-content:center; z-index:100; opacity:0; pointer-events:none; transition:opacity .18s; }
+    .ov.open { opacity:1; pointer-events:all; }
+    .modal { background:var(--bg2); border:1px solid var(--bdr); border-radius:12px; padding:20px; width:100%; max-width:520px; max-height:90vh; overflow-y:auto; }
+    .mh { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+    .mh h2 { font-size:1rem; }
+    .mf { display:flex; justify-content:flex-end; gap:8px; margin-top:16px; }
+    .fr { margin-bottom:12px; }
+    .fl { font-size:.78rem; color:var(--t2); margin-bottom:4px; display:block; }
+    .fi { width:100%; background:var(--bg3); border:1px solid var(--bdr); border-radius:6px; padding:8px 10px; color:var(--t1); font-size:.85rem; font-family:inherit; outline:none; transition:border-color .2s; }
+    .fi:focus { border-color:var(--acc); }
+    textarea.fi { resize:vertical; min-height:70px; }
+    .fhint { font-size:.72rem; color:var(--t2); margin-top:3px; }
+
+    /* tag input */
+    .tag-wrap { display:flex; flex-wrap:wrap; gap:4px; background:var(--bg3); border:1px solid var(--bdr); border-radius:6px; padding:5px 8px; cursor:text; }
+    .tag-wrap:focus-within { border-color:var(--acc); }
+    .tag-wrap input { background:none; border:none; color:var(--t1); font-size:.82rem; font-family:inherit; outline:none; min-width:80px; flex:1; }
+    .ti { display:flex; align-items:center; gap:3px; background:var(--bg4); border:1px solid var(--bdr); border-radius:10px; padding:1px 6px; font-size:.72rem; }
+    .ti button { background:none; border:none; cursor:pointer; color:var(--t2); font-size:.75rem; line-height:1; padding:0 1px; }
+
+    /* rating in modal */
+    .rat { display:flex; gap:4px; }
+    .rat-s { font-size:1.3rem; cursor:pointer; color:var(--bdr); transition:color .1s; }
+    .rat-s.on { color:#f5a623; }
+    .rat-s:hover { color:#f5a623; }
+
+    /* bulk */
+    .b2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .bp { background:var(--bg3); border:1px solid var(--bdr); border-radius:8px; padding:10px 14px; text-align:center; margin:6px 0; }
+    .bp strong { color:var(--acc); font-size:1.8rem; display:block; line-height:1.1; }
+    .bp span { font-size:.78rem; color:var(--t2); }
+
+    /* shortcuts */
+    .sc-grid { display:grid; grid-template-columns:auto 1fr; gap:5px 14px; align-items:center; }
+    .sk { background:var(--bg3); border:1px solid var(--bdr); border-radius:4px; padding:2px 7px; font-size:.75rem; font-family:monospace; white-space:nowrap; }
+    .sd { font-size:.82rem; color:var(--t2); }
+
+    /* confirm */
+    .cb { padding:8px 0; font-size:.9rem; color:var(--t2); }
+
+    /* toast */
+    #tw { position:fixed; bottom:18px; right:18px; z-index:9999; display:flex; flex-direction:column; gap:6px; pointer-events:none; }
+    .toast { background:var(--bg3); border:1px solid var(--bdr); border-radius:8px; padding:8px 14px; font-size:.82rem; max-width:300px; opacity:1; transform:translateY(0); transition:opacity .3s,transform .3s; pointer-events:none; }
+    .toast.ok { border-color:var(--ok); }
+    .toast.err { border-color:var(--danger); }
+    .toast.hide { opacity:0; transform:translateY(6px); }
+
+    /* resume banner */
+    .rbanner { background:#0c1a0c; border-bottom:1px solid #2d6a2d; padding:7px 14px; display:flex; align-items:center; gap:10px; font-size:.83rem; flex-shrink:0; }
+    .rbanner p { flex:1; }
+    .rbanner strong { color:#5fb85f; }
+
+    /* queue panel (inline in sidebar) */
+    .q-header { padding:6px 10px; font-size:.75rem; font-weight:600; color:var(--t2); text-transform:uppercase; letter-spacing:.5px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--bdr); flex-shrink:0; }
+
+    /* light theme tweaks */
+    body.light .ps { background:#111; }
+    body.light .nav-btn { background:var(--bg4); }
+
+    @media (max-width:600px) {
+      :root { --sidebar-w: 260px; }
+      .hr .btn span { display:none; }
+    }
+  </style>
+</head>
+<body id="app" :class="{ light: theme==='light' }">
+
+<!-- ── RESUME BANNER ── -->
+<div class="rbanner" v-if="resumeBanner" style="z-index:19;">
+  <p>📂 Data ditemukan di <strong>{{ fsa.pendingName }}</strong> — muat dari file tersebut?</p>
+  <button class="btn ok" @click="doResume">Muat dari File</button>
+  <button class="ico" @click="resumeBanner=false">✕</button>
+</div>
+
+<!-- ── HEADER ── -->
+<header>
+  <button class="ico" @click="sidebarOff=!sidebarOff" title="Sidebar (\\)">☰</button>
+  <div class="logo">Video<b>Pro</b><span class="ver">v4</span></div>
+  <div class="sw">
+    <span class="sw-ico">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+    </span>
+    <input v-model="search" placeholder="Cari video…" @keydown.escape="search=''">
+  </div>
+
+  <div class="hr">
+    <button class="btn bulk" @click="openBulk" title="Bulk Add (B)">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+        <line x1="8" y1="18" x2="21" y2="18"/>
+        <circle cx="3" cy="6" r="1.5" fill="currentColor"/>
+        <circle cx="3" cy="12" r="1.5" fill="currentColor"/>
+        <circle cx="3" cy="18" r="1.5" fill="currentColor"/>
+      </svg>
+      <span>Bulk</span>
+    </button>
+    <button class="btn pa" @click="openAdd" title="Tambah Video (N)">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+        <path d="M12 5v14M5 12h14"/>
+      </svg>
+      <span>Tambah</span>
+    </button>
+    <button class="ico" @click="activeTab='stats'" title="Statistik">📊</button>
+    <button class="ico" @click="theme=theme==='dark'?'light':'dark'" title="Tema">{{ theme==='dark'?'🌙':'☀️' }}</button>
+    <button class="ico" @click="ovHelp=true" title="Pintasan (?)">⌨</button>
+  </div>
+</header>
+
+<!-- ── MAIN ── -->
+<div class="main">
+
+  <!-- ── SIDEBAR ── -->
+  <div class="sidebar" :class="{off:sidebarOff}" :style="{'width':sidebarW+'px','--sidebar-w':sidebarW+'px'}">
+
+    <!-- Playlist selector -->
+    <div class="pl-bar">
+      <div v-for="pl in playlists" :key="pl.id"
+           class="pl-chip" :class="{on:curPlId===pl.id}"
+           @click="curPlId=pl.id; search=''; filterCat=''; filterTag=''"
+           @dblclick="renamePl(pl)" :title="'Klik untuk ganti · Doubleklik untuk rename'">
+        {{ pl.name }}
+      </div>
+      <div class="pl-chip add" @click="addPlaylist" title="Playlist baru">＋</div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <div class="tab" :class="{on:activeTab==='playlist'}" @click="activeTab='playlist'">
+        Playlist <span class="badge">{{ curPl.length }}</span>
+      </div>
+      <div class="tab" :class="{on:activeTab==='queue'}" @click="activeTab='queue'">
+        Queue <span class="badge" v-if="queue.length">{{ queue.length }}</span>
+      </div>
+      <div class="tab" :class="{on:activeTab==='history'}" @click="activeTab='history'">Riwayat</div>
+      <div class="tab" :class="{on:activeTab==='stats'}" @click="activeTab='stats'">Stats</div>
+    </div>
+
+    <!-- ── PLAYLIST PANEL ── -->
+    <template v-if="activeTab==='playlist'">
+      <!-- Sort bar -->
+      <div class="sb">
+        <label>Sort:</label>
+        <select class="fsel" v-model="sortMode">
+          <option value="manual">Manual</option>
+          <option value="az">A→Z</option>
+          <option value="za">Z→A</option>
+          <option value="newest">Terbaru</option>
+          <option value="oldest">Terlama</option>
+          <option value="most">Paling Sering</option>
+          <option value="rating">Rating ★</option>
+        </select>
+        <button class="mini" @click="toggleFilter" title="Filter">🔍</button>
+      </div>
+
+      <!-- Tag filter -->
+      <div class="tf" v-if="showFilter && allTags.length">
+        <div class="tg" :class="{on:filterTag===''}" @click="filterTag=''">Semua</div>
+        <div class="tg" v-for="t in allTags" :key="t" :class="{on:filterTag===t}" @click="filterTag=filterTag===t?'':t">{{ t }}</div>
+      </div>
+
+      <!-- Cat filter -->
+      <div class="cat-row" v-if="curCats.length">
+        <div class="chip" :class="{on:filterCat===''}" @click="filterCat=''">Semua</div>
+        <div class="chip" v-for="c in curCats" :key="c.id" :class="{on:filterCat===c.id}" @click="filterCat=filterCat===c.id?'':c.id">{{ c.name }}</div>
+      </div>
+
+      <!-- Video list -->
+      <div class="vl" ref="vlRef">
+        <div v-if="!sortedPl.length" style="padding:24px;text-align:center;color:var(--t2);font-size:.85rem;">
+          <div style="font-size:2rem;margin-bottom:8px;">📭</div>
+          {{ search ? 'Tidak ada hasil' : 'Playlist kosong' }}
+        </div>
+        <div v-for="v in sortedPl" :key="v.id"
+             class="vi" :class="{on: curId===v.id, dragging: drag.src===v.id, over: drag.over===v.id}"
+             @click="play(v.id)"
+             draggable="true"
+             @dragstart="drag.src=v.id"
+             @dragover.prevent="drag.over=v.id"
+             @dragleave="drag.over=''"
+             @drop="doDrop(v.id)"
+             @dragend="drag={src:'',over:''}">
+          <div class="vi-now" v-if="curId===v.id"></div>
+          <div class="q-num" v-if="queueIdx(v.id)>0">{{ queueIdx(v.id) }}</div>
+          <img v-if="v.thumb" :src="v.thumb" class="vt" :alt="v.title" loading="lazy">
+          <div v-else class="vt-ph">▶</div>
+          <div class="vi-info">
+            <div class="vi-title">{{ v.title }}</div>
+            <div class="vi-meta">
+              <span v-if="v.cat">{{ catName(v.cat) }}</span>
+              <span class="wc" v-if="v.wc">👁 {{ v.wc }}</span>
+              <span class="stars" @click.stop="setRating(v.id,$event)">{{ starStr(v.rating) }}</span>
+              <span v-if="v.notes" title="Ada catatan">📝</span>
+            </div>
+            <div class="vi-tags" v-if="v.tags && v.tags.length">
+              <span class="vt-chip" v-for="t in v.tags" :key="t">{{ t }}</span>
+            </div>
+          </div>
+          <div class="vi-act">
+            <button class="mini" @click.stop="addToQueue(v.id)" title="Tambah ke queue">＋Q</button>
+            <button class="mini" @click.stop="openEdit(v.id)" title="Edit">✎</button>
+            <button class="mini" @click.stop="askDel(v.id)" title="Hapus">🗑</button>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- ── QUEUE PANEL ── -->
+    <template v-if="activeTab==='queue'">
+      <div class="q-header">
+        Antrian <span style="font-size:.7rem;font-weight:400;">({{ queue.length }} video)</span>
+        <button class="mini" @click="queue=[]">Kosongkan</button>
+      </div>
+      <div class="vl">
+        <div v-if="!queue.length" style="padding:24px;text-align:center;color:var(--t2);font-size:.85rem;">
+          <div style="font-size:2rem;margin-bottom:8px;">🎵</div>
+          Queue kosong. Tambah video dengan tombol ＋Q
+        </div>
+        <div v-for="(vid,i) in queueVideos" :key="vid.id" class="vi">
+          <div class="vt-ph" style="font-size:.75rem;font-weight:700;color:var(--acc);">{{ i+1 }}</div>
+          <div class="vi-info">
+            <div class="vi-title">{{ vid.title }}</div>
+            <div class="vi-meta"><span>{{ catName(vid.cat) }}</span></div>
+          </div>
+          <div class="vi-act" style="opacity:1;">
+            <button class="mini" @click.stop="playFromQueue(i)" title="Putar sekarang">▶</button>
+            <button class="mini" @click.stop="removeFromQueue(i)" title="Hapus dari queue">✕</button>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- ── HISTORY PANEL ── -->
+    <template v-if="activeTab==='history'">
+      <div class="q-header">
+        Riwayat
+        <button class="mini" @click="hist=[]">Bersihkan</button>
+      </div>
+      <div class="vl">
+        <div v-for="h in histDisplay" :key="h.id+h.at" class="vi" @click="play(h.id)">
+          <div class="vt-ph">⏱</div>
+          <div class="vi-info">
+            <div class="vi-title">{{ h.title }}</div>
+            <div class="vi-meta"><span>{{ fmtD(h.at) }}</span></div>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- ── STATS PANEL ── -->
+    <template v-if="activeTab==='stats'">
+      <div class="vl" style="overflow-y:auto;">
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-n">{{ allVideos.length }}</div><div class="stat-l">Total Video</div></div>
+          <div class="stat-card"><div class="stat-n">{{ playlists.length }}</div><div class="stat-l">Playlist</div></div>
+          <div class="stat-card"><div class="stat-n">{{ totalWatched }}</div><div class="stat-l">Total Ditonton</div></div>
+          <div class="stat-card"><div class="stat-n">{{ allTags.length }}</div><div class="stat-l">Unik Tags</div></div>
+          <div class="stat-card"><div class="stat-n">{{ hist.length }}</div><div class="stat-l">Riwayat</div></div>
+          <div class="stat-card"><div class="stat-n">{{ avgRating }}</div><div class="stat-l">Rating Rata-rata</div></div>
+        </div>
+        <div class="top-list">
+          <h3>🔥 Paling Sering Ditonton</h3>
+          <div class="top-item" v-for="(v,i) in topWatched" :key="v.id" @click="play(v.id);curPlId=v.plId" style="cursor:pointer;">
+            <span class="top-rank">{{ i+1 }}</span>
+            <div style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ v.title }}</div>
+            <span style="color:var(--t2);font-size:.72rem;">👁 {{ v.wc }}</span>
+          </div>
+          <div v-if="!topWatched.length" style="color:var(--t2);font-size:.8rem;padding:8px 0;">Belum ada data tontonan</div>
+        </div>
+        <div class="top-list">
+          <h3>⭐ Rating Tertinggi</h3>
+          <div class="top-item" v-for="(v,i) in topRated" :key="v.id" @click="play(v.id);curPlId=v.plId" style="cursor:pointer;">
+            <span class="top-rank">{{ i+1 }}</span>
+            <div style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ v.title }}</div>
+            <span style="color:#f5a623;font-size:.78rem;">{{ starStr(v.rating) }}</span>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- Sidebar footer -->
+    <div class="sf">
+      <div class="sf-main">
+        <button class="btn" style="flex:1;justify-content:center;" @click="trigImport">⬆ Import</button>
+        <button class="btn" style="flex:1;justify-content:center;" @click="doExport">⬇ Export</button>
+        <button class="btn pd" @click="askClearAll">🗑</button>
+      </div>
+      <div class="sf-file" v-if="fsaSupported">
+        <div class="sf-file-btns">
+          <button class="btn" style="flex:1;justify-content:center;font-size:.74rem;padding:5px 3px;" @click="doOpenFile">📂 Buka</button>
+          <button class="btn" style="flex:1;justify-content:center;font-size:.74rem;padding:5px 3px;" @click="doNewFile">🆕 Buat</button>
+          <button class="btn" style="flex:1;justify-content:center;font-size:.74rem;padding:5px 3px;" @click="manageCats">🗂 Kat.</button>
+        </div>
+        <div class="file-ind" v-if="fsaHandle">
+          <span>●</span>
+          <span class="fn">{{ fsaHandle.name }}</span>
+          <button class="mini" @click="doUnlinkFile">✕</button>
+        </div>
+      </div>
+      <div style="padding:5px 8px;" v-if="!fsaSupported">
+        <button class="btn" style="width:100%;justify-content:center;font-size:.74rem;" @click="manageCats">🗂 Kelola Kategori</button>
+      </div>
+    </div>
+  </div><!-- /sidebar -->
+
+  <!-- Resize handle -->
+  <div class="rsz" :class="{active:resizing}" @mousedown.prevent="startResize"></div>
+
+  <!-- ── PLAYER COL ── -->
+  <div class="pcol">
+    <div class="ps" ref="psRef">
+      <div class="ph" v-if="!curId">
+        <div class="ph-ico">▶</div>
+        <div class="ph-t">Pilih video dari playlist</div>
+        <button class="btn pa" @click="openAdd" style="margin-top:4px;">Tambah Video Pertama</button>
+      </div>
+      <iframe v-if="curUrl" :src="curUrl" allowfullscreen allow="autoplay; encrypted-media; fullscreen" :key="curUrl"></iframe>
+    </div>
+
+    <!-- Queue banner -->
+    <div class="q-banner" v-if="queue.length">
+      🎵 Queue: <strong>{{ queueVideos[0]?.title }}</strong>
+      <span v-if="queue.length>1">+ {{ queue.length-1 }} lagi</span>
+      <button class="mini" @click="activeTab='queue'">Lihat</button>
+    </div>
+
+    <div class="ctrl">
+      <div class="now">
+        <div class="now-t">{{ curVideo?.title || 'Tidak ada video' }}</div>
+        <div class="now-m" v-if="curVideo">
+          <span v-if="curVideo.cat">{{ catName(curVideo.cat) }}</span>
+          <span class="stars">{{ starStr(curVideo.rating) }}</span>
+          <span class="wc">👁 {{ curVideo.wc||0 }}</span>
+          <span v-if="curVideo.tags?.length">🏷 {{ curVideo.tags.join(', ') }}</span>
+        </div>
+      </div>
+      <button class="nav-btn" @click="go(-1)" title="Sebelumnya (←)">&#9664;</button>
+      <button class="nav-btn" @click="go(1)"  title="Berikutnya (→)">&#9654;</button>
+      <button class="nav-btn" :class="{on:shuffle}" @click="shuffle=!shuffle" title="Acak (S)">⇄</button>
+      <button class="nav-btn" :class="{on:loop}"    @click="loop=!loop"       title="Loop (L)">↻</button>
+      <button class="nav-btn" @click="copyUrl" title="Copy URL">⎘</button>
+      <button class="nav-btn" @click="toggleFS" title="Fullscreen (F)">⛶</button>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- ── TOAST ── -->
+<div id="tw">
+  <div v-for="t in toasts" :key="t.id" class="toast" :class="[t.type, {hide:t.hide}]">{{ t.msg }}</div>
+</div>
+
+<!-- ── MODAL: VIDEO ── -->
+<div class="ov" :class="{open:ovVideo}" @click.self="ovVideo=false">
+  <div class="modal">
+    <div class="mh"><h2>{{ editId ? 'Edit Video' : 'Tambah Video' }}</h2><button class="ico" @click="ovVideo=false">✕</button></div>
+    <div class="fr">
+      <label class="fl">Judul *</label>
+      <input class="fi" v-model="form.title" placeholder="Judul video…" ref="titleRef">
+    </div>
+    <div class="fr">
+      <label class="fl">Embed / URL *</label>
+      <textarea class="fi" v-model="form.embed" placeholder="Paste iframe atau URL https://…" style="min-height:80px;"></textarea>
+    </div>
+    <div class="fr">
+      <label class="fl">Playlist</label>
+      <select class="fi" v-model="form.plId">
+        <option v-for="pl in playlists" :key="pl.id" :value="pl.id">{{ pl.name }}</option>
+      </select>
+    </div>
+    <div class="fr">
+      <label class="fl">Kategori</label>
+      <select class="fi" v-model="form.cat">
+        <option value="">— Tanpa Kategori —</option>
+        <option v-for="c in formCats" :key="c.id" :value="c.id">{{ c.name }}</option>
+      </select>
+    </div>
+    <div class="fr">
+      <label class="fl">Tags <span style="font-weight:400;color:var(--t2)">(Enter untuk tambah)</span></label>
+      <div class="tag-wrap" @click="$refs.tagIn?.focus()">
+        <span class="ti" v-for="(t,i) in form.tags" :key="t">
+          {{ t }}<button @click.stop="form.tags.splice(i,1)">×</button>
+        </span>
+        <input ref="tagIn" v-model="tagInput" @keydown.enter.prevent="addTag" @keydown.backspace="backspaceTag" placeholder="tag…">
+      </div>
+    </div>
+    <div class="fr">
+      <label class="fl">Rating</label>
+      <div class="rat">
+        <span v-for="n in 5" :key="n" class="rat-s" :class="{on: n<=form.rating}" @click="form.rating=form.rating===n?0:n">★</span>
+      </div>
+    </div>
+    <div class="fr">
+      <label class="fl">Thumbnail URL <span style="font-weight:400;color:var(--t2)">(opsional)</span></label>
+      <input class="fi" v-model="form.thumb" placeholder="https://example.com/cover.jpg">
+    </div>
+    <div class="fr">
+      <label class="fl">Catatan <span style="font-weight:400;color:var(--t2)">(opsional)</span></label>
+      <textarea class="fi" v-model="form.notes" placeholder="Catatan tambahan…" style="min-height:55px;"></textarea>
+    </div>
+    <div class="mf">
+      <button class="btn" @click="ovVideo=false">Batal</button>
+      <button class="btn pa" @click="saveVideo">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: BULK ADD ── -->
+<div class="ov" :class="{open:ovBulk}" @click.self="ovBulk=false">
+  <div class="modal" style="max-width:560px;">
+    <div class="mh"><h2>📋 Tambah Massal</h2><button class="ico" @click="ovBulk=false">✕</button></div>
+    <div class="fr">
+      <label class="fl">URL / Iframe (satu per baris) *</label>
+      <textarea class="fi" v-model="bulk.input" style="min-height:130px;" @input="updateBulkCount"
+        placeholder="Paste URL atau kode iframe&#10;&#10;https://vidara.to/e/abc&#10;https://vidara.to/e/def"></textarea>
+    </div>
+    <div class="bp">
+      <strong>{{ bulk.count }}</strong>
+      <span>URL valid terdeteksi</span>
+    </div>
+    <div class="b2">
+      <div class="fr" style="margin:0;">
+        <label class="fl">Prefix Nama</label>
+        <input class="fi" v-model="bulk.prefix" placeholder="Video" @input="updateBulkCount">
+      </div>
+      <div class="fr" style="margin:0;">
+        <label class="fl">Mulai dari No.</label>
+        <input class="fi" type="number" v-model.number="bulk.start" min="0" @input="updateBulkCount">
+      </div>
+    </div>
+    <div class="fr" style="margin-top:10px;">
+      <label class="fl">Playlist</label>
+      <select class="fi" v-model="bulk.plId">
+        <option v-for="pl in playlists" :key="pl.id" :value="pl.id">{{ pl.name }}</option>
+      </select>
+    </div>
+    <div class="fr">
+      <label class="fl">Kategori</label>
+      <select class="fi" v-model="bulk.cat">
+        <option value="">— Tanpa Kategori —</option>
+        <option v-for="c in bulkCats" :key="c.id" :value="c.id">{{ c.name }}</option>
+      </select>
+    </div>
+    <div class="fhint">Nama: "<span>{{ bulk.prefix||'Video' }} {{ bulk.start||1 }}</span>", "{{ bulk.prefix||'Video' }} {{ (bulk.start||1)+1 }}"…</div>
+    <div class="mf">
+      <button class="btn" @click="ovBulk=false">Batal</button>
+      <button class="btn pa" @click="doBulkAdd">Tambah Semua</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: KATEGORI ── -->
+<div class="ov" :class="{open:ovCat}" @click.self="ovCat=false">
+  <div class="modal">
+    <div class="mh"><h2>🗂 Kelola Kategori</h2><button class="ico" @click="ovCat=false">✕</button></div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <input class="fi" style="flex:1;" v-model="newCatName" placeholder="Nama kategori baru…" @keydown.enter="addCat" ref="catIn">
+      <button class="btn pa" @click="addCat">Tambah</button>
+    </div>
+    <div v-for="pl in playlists" :key="pl.id" style="margin-bottom:12px;">
+      <div style="font-size:.75rem;color:var(--t2);margin-bottom:4px;font-weight:600;">{{ pl.name }}</div>
+      <div v-if="!pl.cats.length" style="font-size:.8rem;color:var(--t2);padding:4px 0;">Belum ada kategori</div>
+      <div v-for="c in pl.cats" :key="c.id" style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--bdr);">
+        <span style="flex:1;font-size:.85rem;">{{ c.name }}</span>
+        <button class="mini pd" @click="removeCat(pl.id,c.id)">Hapus</button>
+      </div>
+    </div>
+    <div class="mf"><button class="btn pa" @click="ovCat=false">Selesai</button></div>
+  </div>
+</div>
+
+<!-- ── MODAL: CONFIRM ── -->
+<div class="ov" :class="{open:ovConfirm}" @click.self="ovConfirm=false">
+  <div class="modal" style="max-width:380px;">
+    <div class="mh"><h2>{{ confirm.title }}</h2></div>
+    <div class="cb">{{ confirm.msg }}</div>
+    <div class="mf">
+      <button class="btn" @click="ovConfirm=false">Batal</button>
+      <button class="btn pd" @click="doConfirm">Ya, Lanjutkan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: RENAME PLAYLIST ── -->
+<div class="ov" :class="{open:ovRename}" @click.self="ovRename=false">
+  <div class="modal" style="max-width:380px;">
+    <div class="mh"><h2>Rename Playlist</h2><button class="ico" @click="ovRename=false">✕</button></div>
+    <div class="fr">
+      <label class="fl">Nama Baru</label>
+      <input class="fi" v-model="renameVal" @keydown.enter="doRename" ref="renameRef">
+    </div>
+    <div class="mf">
+      <button class="btn" @click="ovRename=false">Batal</button>
+      <button class="btn pa" @click="doRename">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: SHORTCUTS ── -->
+<div class="ov" :class="{open:ovHelp}" @click.self="ovHelp=false">
+  <div class="modal" style="max-width:380px;">
+    <div class="mh"><h2>⌨ Pintasan Keyboard</h2><button class="ico" @click="ovHelp=false">✕</button></div>
+    <div class="sc-grid">
+      <span class="sk">←</span><span class="sd">Video sebelumnya</span>
+      <span class="sk">→</span><span class="sd">Video berikutnya</span>
+      <span class="sk">F</span><span class="sd">Toggle fullscreen</span>
+      <span class="sk">L</span><span class="sd">Toggle loop</span>
+      <span class="sk">S</span><span class="sd">Toggle shuffle</span>
+      <span class="sk">N</span><span class="sd">Tambah video baru</span>
+      <span class="sk">B</span><span class="sd">Bulk Add</span>
+      <span class="sk">Q</span><span class="sd">Lihat Queue</span>
+      <span class="sk">?</span><span class="sd">Bantuan ini</span>
+      <span class="sk">Esc</span><span class="sd">Tutup modal</span>
+    </div>
+    <div class="mf"><button class="btn pa" @click="ovHelp=false">Tutup</button></div>
+  </div>
+</div>
+
+<!-- hidden file input -->
+<input type="file" id="fileIn" accept=".json" style="display:none">
+
+<script>
+const { createApp, ref, reactive, computed, watch, nextTick, onMounted } = Vue;
+
+/* ── HELPERS ── */
+const uid  = () => Math.random().toString(36).slice(2,9);
+const esc  = s => s?.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtD = d => { if(!d) return ''; const dt=new Date(d); return isNaN(dt)?d: dt.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'}); };
+const cloneDeep = o => JSON.parse(JSON.stringify(o));
+
+function parseEmbed(raw) {
+  if (!raw) return null;
+  const s = raw.trim();
+  // iframe
+  const m = s.match(/src=["']([^"']+)["']/);
+  if (m) { try { const u=new URL(m[1]); if(u.protocol==='https:') return u.href; } catch{} }
+  // direct url
+  try { const u=new URL(s); if(u.protocol==='https:') return u.href; } catch{}
+  return null;
+}
+
+function safeUrl(u) {
+  try { const x=new URL(u); return x.protocol==='https:' ? x.href : null; } catch{ return null; }
+}
+
+/* ── IDB ── */
+const IDB = (() => {
+  let _db=null;
+  const open=()=>new Promise((res,rej)=>{
+    if(_db){res(_db);return;}
+    const r=indexedDB.open('vp4',1);
+    r.onupgradeneeded=e=>e.target.result.createObjectStore('kv');
+    r.onsuccess=e=>{_db=e.target.result;res(_db);};
+    r.onerror=e=>rej(e.target.error);
+  });
+  const run=async(mode,key,val)=>{
+    const db=await open();
+    return new Promise(res=>{
+      const s=db.transaction('kv',mode).objectStore('kv');
+      (mode==='readwrite'?(val===undefined?s.delete(key):s.put(val,key)):s.get(key)).onsuccess=e=>res(e.target.result);
+    });
+  };
+  return{get:k=>run('readonly',k),set:(k,v)=>run('readwrite',k,v),del:k=>run('readwrite',k)};
+})();
+
+/* ── FSA ── */
+const FSA = {
+  handle: null, pending: null, pendingName: '',
+  supported: typeof window!=='undefined' && 'showOpenFilePicker' in window,
+  async write(data) {
+    if(!this.handle) return false;
+    try {
+      const w=await this.handle.createWritable();
+      await w.write(JSON.stringify(data,null,2));
+      await w.close();
+      return true;
+    } catch { this.handle=null; IDB.del('fh4'); return false; }
+  },
+  async openExisting() {
+    try {
+      const[h]=await window.showOpenFilePicker({types:[{description:'VideoPro Data',accept:{'application/json':['.json']}}]});
+      this.handle=h; await IDB.set('fh4',h);
+      return JSON.parse(await(await h.getFile()).text());
+    } catch { return null; }
+  },
+  async createNew(data) {
+    try {
+      const h=await window.showSaveFilePicker({suggestedName:'videopro-data.json',types:[{description:'VideoPro Data',accept:{'application/json':['.json']}}]});
+      this.handle=h; await IDB.set('fh4',h);
+      await this.write(data); return true;
+    } catch { return false; }
+  },
+  async tryRestore() {
+    try {
+      const h=await IDB.get('fh4'); if(!h) return false;
+      const perm=await h.queryPermission({mode:'readwrite'});
+      if(perm==='granted'){this.handle=h;return JSON.parse(await(await h.getFile()).text());}
+      if(perm==='prompt'){this.pending=h;this.pendingName=h.name;return 'pending';}
+    } catch{}
+    return false;
+  },
+  async resumePending() {
+    if(!this.pending) return null;
+    try {
+      const perm=await this.pending.requestPermission({mode:'readwrite'});
+      if(perm==='granted'){this.handle=this.pending;this.pending=null;return JSON.parse(await(await this.handle.getFile()).text());}
+    } catch{}
+    return null;
+  },
+  async unlink(){this.handle=null;this.pending=null;this.pendingName='';await IDB.del('fh4');}
+};
+
+/* ── DEFAULT DATA ── */
+const defaultPl = () => ({ id:uid(), name:'Playlist 1', cats:[], videos:[] });
+
+/* ── APP ── */
+createApp({
+  setup() {
+    // ── STATE ──
+    const playlists   = ref([defaultPl()]);
+    const curPlId     = ref('');
+    const hist        = ref([]);
+    const queue       = ref([]);   // array of video ids
+    const theme       = ref('dark');
+    const sortMode    = ref('manual');
+    const search      = ref('');
+    const filterCat   = ref('');
+    const filterTag   = ref('');
+    const showFilter  = ref(false);
+    const activeTab   = ref('playlist');
+    const sidebarOff  = ref(false);
+    const sidebarW    = ref(300);
+    const resizing    = ref(false);
+    const drag        = reactive({ src:'', over:'' });
+    const shuffle     = ref(false);
+    const loop        = ref(false);
+    const curId       = ref('');
+    const resumeBanner = ref(false);
+    const toasts      = ref([]);
+
+    // modals
+    const ovVideo   = ref(false);
+    const ovBulk    = ref(false);
+    const ovCat     = ref(false);
+    const ovConfirm = ref(false);
+    const ovRename  = ref(false);
+    const ovHelp    = ref(false);
+    const editId    = ref('');
+
+    // form
+    const emptyForm = () => ({ title:'', embed:'', plId:'', cat:'', tags:[], rating:0, thumb:'', notes:'' });
+    const form      = reactive(emptyForm());
+    const tagInput  = ref('');
+
+    // bulk
+    const bulk = reactive({ input:'', count:0, prefix:'Video', start:1, plId:'', cat:'' });
+
+    // cat modal
+    const newCatName = ref('');
+
+    // confirm
+    const confirm = reactive({ title:'', msg:'', cb:null });
+
+    // rename
+    const renameVal  = ref('');
+    const renamePlId = ref('');
+
+    // refs
+    const titleRef  = ref(null);
+    const tagIn     = ref(null);
+    const catIn     = ref(null);
+    const renameRef = ref(null);
+    const vlRef     = ref(null);
+    const psRef     = ref(null);
+
+    // FSA state
+    const fsaSupported = FSA.supported;
+    const fsaHandle    = ref(null);
+
+    // ── COMPUTED ──
+    const curPl = computed(() => {
+      const pl = playlists.value.find(p=>p.id===curPlId.value);
+      return pl?.videos || [];
+    });
+
+    const curPlaylist = computed(() => playlists.value.find(p=>p.id===curPlId.value));
+
+    const curCats = computed(() => curPlaylist.value?.cats || []);
+
+    const formCats = computed(() => {
+      const pl = playlists.value.find(p=>p.id===form.plId);
+      return pl?.cats || [];
+    });
+
+    const bulkCats = computed(() => {
+      const pl = playlists.value.find(p=>p.id===bulk.plId);
+      return pl?.cats || [];
+    });
+
+    const allVideos = computed(() => playlists.value.flatMap(p=>p.videos.map(v=>({...v,plId:p.id}))));
+
+    const allTags = computed(() => {
+      const s = new Set();
+      curPl.value.forEach(v=>(v.tags||[]).forEach(t=>s.add(t)));
+      return [...s].sort();
+    });
+
+    const sortedPl = computed(() => {
+      let arr = curPl.value.filter(v => {
+        const ms = search.value.toLowerCase();
+        if (ms && !v.title.toLowerCase().includes(ms) && !(v.tags||[]).join(' ').toLowerCase().includes(ms)) return false;
+        if (filterCat.value && v.cat !== filterCat.value) return false;
+        if (filterTag.value && !(v.tags||[]).includes(filterTag.value)) return false;
+        return true;
+      });
+      if (sortMode.value==='az')     arr=[...arr].sort((a,b)=>a.title.localeCompare(b.title));
+      if (sortMode.value==='za')     arr=[...arr].sort((a,b)=>b.title.localeCompare(a.title));
+      if (sortMode.value==='newest') arr=[...arr].sort((a,b)=>new Date(b.at)-new Date(a.at));
+      if (sortMode.value==='oldest') arr=[...arr].sort((a,b)=>new Date(a.at)-new Date(b.at));
+      if (sortMode.value==='most')   arr=[...arr].sort((a,b)=>(b.wc||0)-(a.wc||0));
+      if (sortMode.value==='rating') arr=[...arr].sort((a,b)=>(b.rating||0)-(a.rating||0));
+      return arr;
+    });
+
+    const curVideo = computed(() => allVideos.value.find(v=>v.id===curId.value) || null);
+    const curUrl   = computed(() => curVideo.value?.url || null);
+
+    const histDisplay = computed(() => [...hist.value].reverse().slice(0,100));
+
+    const queueVideos = computed(() => queue.value.map(id=>allVideos.value.find(v=>v.id===id)).filter(Boolean));
+
+    const totalWatched = computed(() => allVideos.value.reduce((s,v)=>s+(v.wc||0),0));
+
+    const avgRating = computed(() => {
+      const rated = allVideos.value.filter(v=>v.rating);
+      if(!rated.length) return '—';
+      return (rated.reduce((s,v)=>s+v.rating,0)/rated.length).toFixed(1);
+    });
+
+    const topWatched = computed(() =>
+      [...allVideos.value].filter(v=>v.wc).sort((a,b)=>(b.wc||0)-(a.wc||0)).slice(0,5)
+    );
+    const topRated = computed(() =>
+      [...allVideos.value].filter(v=>v.rating).sort((a,b)=>(b.rating||0)-(a.rating||0)).slice(0,5)
+    );
+
+    // ── HELPERS ──
+    function catName(catId) {
+      if (!catId) return '';
+      for (const pl of playlists.value) {
+        const c = pl.cats.find(c=>c.id===catId);
+        if (c) return c.name;
+      }
+      return '';
+    }
+
+    function starStr(r) {
+      r = r||0;
+      return '★'.repeat(r) + '☆'.repeat(5-r);
+    }
+
+    function queueIdx(id) {
+      const i = queue.value.indexOf(id);
+      return i >= 0 ? i+1 : 0;
+    }
+
+    function toast(msg, type='inf', dur=2800) {
+      const id = uid();
+      toasts.value.push({ id, msg, type, hide:false });
+      setTimeout(()=>{ const t=toasts.value.find(x=>x.id===id); if(t) t.hide=true; },dur);
+      setTimeout(()=>{ toasts.value=toasts.value.filter(x=>x.id!==id); },dur+350);
+    }
+
+    // ── PERSISTENCE ──
+    function snapshot() {
+      return {
+        v:'4', savedAt:new Date().toISOString(),
+        playlists: playlists.value,
+        hist: hist.value,
+        theme: theme.value,
+        sortMode: sortMode.value,
+        curPlId: curPlId.value
+      };
+    }
+
+    async function save() {
+      const d = snapshot();
+      try {
+        localStorage.setItem('vp4', JSON.stringify(d));
+      } catch { toast('Gagal simpan ke storage', 'err'); }
+      if (FSA.handle) {
+        const ok = await FSA.write(d);
+        if (!ok) { toast('⚠ File terputus!', 'err'); fsaHandle.value=null; }
+      }
+    }
+
+    function load() {
+      try {
+        const raw = localStorage.getItem('vp4');
+        if (!raw) return;
+        applyData(JSON.parse(raw), false);
+      } catch {}
+    }
+
+    function applyData(d, doSave=true) {
+      if (!d) return;
+      if (Array.isArray(d.playlists) && d.playlists.length) {
+        playlists.value = d.playlists.map(pl=>({
+          id: pl.id||uid(), name: pl.name||'Playlist', cats: pl.cats||[],
+          videos: (pl.videos||[]).map(v=>({
+            wc:0, thumb:'', notes:'', tags:[], rating:0, ...v
+          }))
+        }));
+      }
+      if (Array.isArray(d.hist)) hist.value = d.hist;
+      if (d.theme) theme.value = d.theme;
+      if (d.sortMode) sortMode.value = d.sortMode;
+      // ensure curPlId valid
+      const plIds = playlists.value.map(p=>p.id);
+      curPlId.value = (d.curPlId && plIds.includes(d.curPlId)) ? d.curPlId : plIds[0];
+      if (doSave) { save(); }
+    }
+
+    // ── PLAYLIST OPS ──
+    function addPlaylist() {
+      const name = prompt('Nama playlist baru:');
+      if (!name?.trim()) return;
+      const pl = { id:uid(), name:name.trim(), cats:[], videos:[] };
+      playlists.value.push(pl);
+      curPlId.value = pl.id;
+      save();
+    }
+
+    function renamePl(pl) {
+      renamePlId.value = pl.id;
+      renameVal.value  = pl.name;
+      ovRename.value   = true;
+      nextTick(()=>renameRef.value?.focus());
+    }
+
+    function doRename() {
+      if (!renameVal.value.trim()) return;
+      const pl = playlists.value.find(p=>p.id===renamePlId.value);
+      if (pl) { pl.name=renameVal.value.trim(); save(); }
+      ovRename.value = false;
+    }
+
+    // ── VIDEO OPS ──
+    function openAdd() {
+      editId.value = '';
+      Object.assign(form, emptyForm());
+      form.plId = curPlId.value;
+      tagInput.value = '';
+      ovVideo.value = true;
+      nextTick(()=>titleRef.value?.focus());
+    }
+
+    function openEdit(id) {
+      const v = allVideos.value.find(x=>x.id===id);
+      if (!v) return;
+      editId.value = id;
+      Object.assign(form, {
+        title: v.title, embed: v.url, plId: v.plId,
+        cat: v.cat||'', tags: [...(v.tags||[])],
+        rating: v.rating||0, thumb: v.thumb||'', notes: v.notes||''
+      });
+      tagInput.value='';
+      ovVideo.value=true;
+      nextTick(()=>titleRef.value?.focus());
+    }
+
+    function saveVideo() {
+      if (!form.title.trim()) { toast('Judul wajib diisi!','err'); return; }
+      const url = parseEmbed(form.embed);
+      if (!url) { toast('URL/embed tidak valid atau bukan HTTPS!','err'); return; }
+      if (editId.value) {
+        // update in-place across any playlist
+        for (const pl of playlists.value) {
+          const idx = pl.videos.findIndex(v=>v.id===editId.value);
+          if (idx>=0) {
+            // if playlist changed, move
+            if (form.plId !== pl.id) {
+              const [v] = pl.videos.splice(idx,1);
+              Object.assign(v,{title:form.title.trim(),url,cat:form.cat,tags:[...form.tags],rating:form.rating,thumb:form.thumb,notes:form.notes});
+              const target=playlists.value.find(p=>p.id===form.plId);
+              if(target) target.videos.push(v);
+            } else {
+              Object.assign(pl.videos[idx],{title:form.title.trim(),url,cat:form.cat,tags:[...form.tags],rating:form.rating,thumb:form.thumb,notes:form.notes});
+            }
+            break;
+          }
+        }
+        toast('Video diperbarui','ok');
+      } else {
+        // check dupe
+        if (allVideos.value.some(v=>v.url===url)) { toast('URL sudah ada di playlist!','err'); return; }
+        const target = playlists.value.find(p=>p.id===form.plId);
+        if (!target) return;
+        target.videos.push({ id:uid(), title:form.title.trim(), url, cat:form.cat, tags:[...form.tags], rating:form.rating, thumb:form.thumb, notes:form.notes, at:new Date().toISOString(), wc:0 });
+        toast('Video ditambahkan','ok');
+      }
+      ovVideo.value=false;
+      save();
+    }
+
+    function askDel(id) {
+      const v=allVideos.value.find(x=>x.id===id);
+      confirm.title='Hapus Video';
+      confirm.msg=`Hapus "${v?.title}"?`;
+      confirm.cb=()=>{
+        for(const pl of playlists.value){ const i=pl.videos.findIndex(v=>v.id===id); if(i>=0){pl.videos.splice(i,1);break;} }
+        if(curId.value===id) curId.value='';
+        queue.value=queue.value.filter(x=>x!==id);
+        save();
+        toast('Video dihapus','ok');
+      };
+      ovConfirm.value=true;
+    }
+
+    function play(id) {
+      const v=allVideos.value.find(x=>x.id===id);
+      if(!v) return;
+      curId.value=id;
+      // increment watch count
+      for(const pl of playlists.value){const vx=pl.videos.find(x=>x.id===id);if(vx){vx.wc=(vx.wc||0)+1;break;}}
+      // history
+      hist.value.push({id,title:v.title,at:new Date().toISOString()});
+      if(hist.value.length>500) hist.value=hist.value.slice(-500);
+      save();
+    }
+
+    function go(dir) {
+      const pl=sortedPl.value;
+      if(!pl.length) return;
+      let idx=pl.findIndex(v=>v.id===curId.value);
+      if(queue.value.length && dir===1) { playFromQueue(0); return; }
+      if(shuffle.value) { idx=Math.floor(Math.random()*pl.length); }
+      else idx=(idx+dir+pl.length)%pl.length;
+      play(pl[idx].id);
+    }
+
+    // ── QUEUE ──
+    function addToQueue(id) {
+      if(!queue.value.includes(id)){queue.value.push(id);toast('Ditambah ke queue','ok');}
+      else toast('Sudah ada di queue','inf');
+    }
+    function removeFromQueue(i) { queue.value.splice(i,1); }
+    function playFromQueue(i) {
+      const id=queue.value[i];
+      queue.value.splice(i,1);
+      play(id);
+    }
+
+    // ── TAGS ──
+    function addTag() {
+      const t=tagInput.value.trim().toLowerCase().replace(/\s+/g,'-');
+      if(t && !form.tags.includes(t)) form.tags.push(t);
+      tagInput.value='';
+    }
+    function backspaceTag() {
+      if(!tagInput.value && form.tags.length) form.tags.pop();
+    }
+
+    // ── RATING ──
+    function setRating(id, e) {
+      e.stopPropagation();
+      const v = allVideos.value.find(x=>x.id===id);
+      if(!v) return;
+      // cycle: no rating → 3 → toggle off at current
+      for(const pl of playlists.value){const vx=pl.videos.find(x=>x.id===id);if(vx){vx.rating=(vx.rating||0)>=5?0:(vx.rating||0)+1;break;}}
+      save();
+    }
+
+    // ── CATEGORIES ──
+    function manageCats() { ovCat.value=true; nextTick(()=>catIn.value?.focus()); }
+    function addCat() {
+      const name=newCatName.value.trim();
+      if(!name) return;
+      const pl=playlists.value.find(p=>p.id===curPlId.value);
+      if(!pl) return;
+      if(pl.cats.some(c=>c.name.toLowerCase()===name.toLowerCase())){toast('Kategori sudah ada','err');return;}
+      pl.cats.push({id:uid(),name});
+      newCatName.value='';
+      save();
+    }
+    function removeCat(plId, catId) {
+      const pl=playlists.value.find(p=>p.id===plId);
+      if(!pl) return;
+      pl.cats=pl.cats.filter(c=>c.id!==catId);
+      pl.videos.forEach(v=>{ if(v.cat===catId) v.cat=''; });
+      save();
+    }
+
+    // ── BULK ADD ──
+    function openBulk() {
+      bulk.input=''; bulk.count=0; bulk.prefix='Video'; bulk.start=curPl.value.length+1;
+      bulk.plId=curPlId.value; bulk.cat='';
+      ovBulk.value=true;
+    }
+    function detectUrls(text) {
+      return text.split('\n').map(l=>l.trim()).filter(Boolean).map(parseEmbed).filter(u=>u);
+    }
+    function updateBulkCount() {
+      bulk.count=detectUrls(bulk.input).length;
+    }
+    function doBulkAdd() {
+      const urls=detectUrls(bulk.input);
+      if(!urls.length){toast('Tidak ada URL valid!','err');return;}
+      const target=playlists.value.find(p=>p.id===bulk.plId);
+      if(!target) return;
+      const ex=new Set(allVideos.value.map(v=>v.url));
+      let added=0,skipped=0;
+      urls.forEach((url,i)=>{
+        if(ex.has(url)){skipped++;return;}
+        target.videos.push({id:uid(),title:`${bulk.prefix||'Video'} ${(bulk.start||1)+added}`,url,cat:bulk.cat||'',tags:[],rating:0,thumb:'',notes:'',at:new Date().toISOString(),wc:0});
+        added++;
+      });
+      ovBulk.value=false;
+      save();
+      toast(`${added} ditambahkan${skipped?` · ${skipped} duplikat dilewati`:''}`, added?'ok':'inf');
+    }
+
+    // ── IMPORT / EXPORT ──
+    function doExport() {
+      const d=snapshot();
+      const a=document.createElement('a');
+      a.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(d,null,2));
+      a.download='videopro-backup.json';
+      a.click();
+    }
+    function trigImport() { document.getElementById('fileIn').click(); }
+    function handleImport(e) {
+      const f=e.target.files[0]; if(!f) return;
+      const r=new FileReader();
+      r.onload=ev=>{ try{applyData(JSON.parse(ev.target.result));toast('Data diimport','ok');}catch{toast('File tidak valid','err');} };
+      r.readAsText(f);
+      e.target.value='';
+    }
+
+    // ── CONFIRM ──
+    function doConfirm() { ovConfirm.value=false; confirm.cb?.(); confirm.cb=null; }
+    function askClearAll() {
+      confirm.title='Hapus Semua Data';
+      confirm.msg='Semua playlist, video, dan riwayat akan dihapus. Tidak bisa dibatalkan!';
+      confirm.cb=()=>{ playlists.value=[defaultPl()]; curPlId.value=playlists.value[0].id; hist.value=[]; queue.value=[]; curId.value=''; save(); toast('Semua data dihapus','ok'); };
+      ovConfirm.value=true;
+    }
+
+    // ── FSA FILE OPS ──
+    async function doOpenFile() {
+      const data=await FSA.openExisting();
+      if(!data){toast('Dibatalkan','inf');return;}
+      applyData(data);
+      fsaHandle.value=FSA.handle;
+      toast(`✓ Terhubung & dimuat dari "${FSA.handle.name}"`,'ok');
+    }
+    async function doNewFile() {
+      const ok=await FSA.createNew(snapshot());
+      if(!ok){toast('Dibatalkan','inf');return;}
+      fsaHandle.value=FSA.handle;
+      toast(`✓ File "${FSA.handle.name}" terhubung — auto-save aktif!`,'ok');
+    }
+    async function doUnlinkFile() {
+      await FSA.unlink(); fsaHandle.value=null;
+      toast('File diputus. Data aman di browser.','inf');
+    }
+    async function doResume() {
+      resumeBanner.value=false;
+      const data=await FSA.resumePending();
+      if(data?.playlists){applyData(data);fsaHandle.value=FSA.handle;toast(`✓ Dimuat dari "${FSA.handle.name}"`,'ok');}
+      else toast('Izin ditolak, pakai data browser','inf');
+    }
+
+    // ── COPY URL ──
+    function copyUrl() {
+      if(!curUrl.value){toast('Tidak ada video aktif','err');return;}
+      navigator.clipboard?.writeText(curUrl.value).then(()=>toast('URL disalin!','ok')).catch(()=>toast('Gagal salin','err'));
+    }
+
+    // ── FULLSCREEN ──
+    function toggleFS() {
+      const el=psRef.value;
+      if(!el) return;
+      if(!document.fullscreenElement) el.requestFullscreen?.();
+      else document.exitFullscreen?.();
+    }
+
+    // ── DRAG DROP ──
+    function doDrop(targetId) {
+      if(drag.src===targetId) return;
+      const pl=playlists.value.find(p=>p.id===curPlId.value);
+      if(!pl) return;
+      const a=pl.videos.findIndex(v=>v.id===drag.src);
+      const b=pl.videos.findIndex(v=>v.id===targetId);
+      if(a<0||b<0) return;
+      const [item]=pl.videos.splice(a,1);
+      pl.videos.splice(b,0,item);
+      drag.src=''; drag.over='';
+      save();
+    }
+
+    // ── RESIZE ──
+    function startResize(e) {
+      resizing.value=true;
+      const startX=e.clientX, startW=sidebarW.value;
+      const onMove=ev=>sidebarW.value=Math.max(180,Math.min(520,startW+ev.clientX-startX));
+      const onUp=()=>{ resizing.value=false; window.removeEventListener('mousemove',onMove); window.removeEventListener('mouseup',onUp); };
+      window.addEventListener('mousemove',onMove);
+      window.addEventListener('mouseup',onUp);
+    }
+
+    function toggleFilter() { showFilter.value=!showFilter.value; }
+
+    // ── KEYBOARD ──
+    function onKey(e) {
+      const tag=e.target.tagName;
+      if(['INPUT','TEXTAREA','SELECT'].includes(tag)) return;
+      const k=e.key;
+      if(k==='ArrowLeft')         go(-1);
+      if(k==='ArrowRight')        go(1);
+      if(k==='f'||k==='F')        toggleFS();
+      if(k==='l'||k==='L')        loop.value=!loop.value;
+      if(k==='s'||k==='S')        shuffle.value=!shuffle.value;
+      if(k==='n'||k==='N')        openAdd();
+      if(k==='b'||k==='B')        openBulk();
+      if(k==='q'||k==='Q')        activeTab.value='queue';
+      if(k==='?')                 ovHelp.value=true;
+      if(k==='\\')                sidebarOff.value=!sidebarOff.value;
+      if(k==='Escape'){
+        ovVideo.value=false; ovBulk.value=false; ovCat.value=false;
+        ovConfirm.value=false; ovHelp.value=false; ovRename.value=false;
+      }
+    }
+
+    // ── WATCHERS (auto-save on data change) ──
+    watch([playlists,hist,theme,sortMode,curPlId], ()=>save(), { deep:true });
+    watch(theme, v=>document.body.classList.toggle('light', v==='light'));
+
+    // ── INIT ──
+    onMounted(async ()=>{
+      load();
+      // import listener
+      document.getElementById('fileIn').addEventListener('change', handleImport);
+      // keyboard
+      window.addEventListener('keydown', onKey);
+      // FSA restore
+      if(FSA.supported){
+        const result=await FSA.tryRestore();
+        if(result==='pending'){ resumeBanner.value=true; }
+        else if(result?.playlists){ applyData(result,false); fsaHandle.value=FSA.handle; toast(`✓ Auto-dimuat dari "${FSA.handle.name}"`,'ok'); }
+        else if(FSA.handle){ fsaHandle.value=FSA.handle; }
+      }
+      // ensure curPlId is valid
+      if(!playlists.value.find(p=>p.id===curPlId.value)){
+        curPlId.value=playlists.value[0]?.id||'';
+      }
+    });
+
+    return {
+      playlists, curPlId, hist, queue, theme, sortMode, search,
+      filterCat, filterTag, showFilter, activeTab, sidebarOff, sidebarW,
+      resizing, drag, shuffle, loop, curId, resumeBanner, toasts,
+      ovVideo, ovBulk, ovCat, ovConfirm, ovRename, ovHelp, editId,
+      form, tagInput, bulk, newCatName, confirm, renameVal, renamePlId,
+      titleRef, tagIn, catIn, renameRef, vlRef, psRef,
+      fsaSupported, fsaHandle,
+      // computed
+      curPl, curPlaylist, curCats, formCats, bulkCats,
+      allVideos, allTags, sortedPl, curVideo, curUrl,
+      histDisplay, queueVideos, totalWatched, avgRating, topWatched, topRated,
+      // methods
+      catName, starStr, queueIdx, toast, fmtD,
+      addPlaylist, renamePl, doRename,
+      openAdd, openEdit, saveVideo, askDel, play, go,
+      addToQueue, removeFromQueue, playFromQueue,
+      addTag, backspaceTag, setRating,
+      manageCats, addCat, removeCat,
+      openBulk, updateBulkCount, doBulkAdd,
+      doExport, trigImport,
+      doConfirm, askClearAll,
+      doOpenFile, doNewFile, doUnlinkFile, doResume,
+      copyUrl, toggleFS, doDrop, startResize, toggleFilter,
+      FSA: { pendingName: computed(()=>FSA.pendingName), supported: FSA.supported },
+      fsa: { pendingName: computed(()=>FSA.pendingName) }
+    };
+  }
+}).mount('#app');
+</script>
+</body>
+</html>
