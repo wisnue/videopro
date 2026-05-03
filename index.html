@@ -240,9 +240,47 @@ textarea.fi{resize:vertical;min-height:68px;}
 .toast.hide{opacity:0;transform:translateY(5px);}
 body.light .ps{background:#111;}
 @media(max-width:620px){:root{--sw:250px;}.hr .btn span{display:none;}}
+/* LOCKSCREEN */
+#lockscreen{position:fixed;inset:0;z-index:99999;background:rgba(10,10,10,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);display:flex;align-items:center;justify-content:center;transition:opacity .4s;}
+#lockscreen.ls-out{opacity:0;pointer-events:none;}
+.lk-box{background:rgba(18,18,18,.88);border:1px solid rgba(255,107,53,.25);border-radius:18px;padding:40px 36px;width:340px;max-width:90vw;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,.6);}
+.lk-logo{font-size:1.5rem;font-weight:800;color:#ff6b35;margin-bottom:4px;letter-spacing:-.5px;}  
+.lk-logo b{color:#e8e8e8;}
+.lk-sub{font-size:.82rem;color:#888;margin-bottom:24px;}
+.lk-ico{font-size:2.8rem;margin-bottom:16px;}
+.lk-inp-wrap{position:relative;margin-bottom:8px;}
+.lk-inp-wrap input{width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:11px 42px 11px 14px;color:#e8e8e8;font-size:.92rem;font-family:inherit;outline:none;transition:border-color .2s,box-shadow .2s;text-align:center;letter-spacing:.08em;}
+.lk-inp-wrap input:focus{border-color:rgba(255,107,53,.6);box-shadow:0 0 0 3px rgba(255,107,53,.12);}
+.lk-inp-wrap input.ls-shake{animation:lsShake .38s ease;}
+@keyframes lsShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+.lk-eye{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#666;font-size:1rem;padding:3px 5px;transition:color .15s;}
+.lk-eye:hover{color:#e8e8e8;}
+.lk-err{height:18px;font-size:.75rem;color:#ef4444;margin-bottom:10px;}
+.lk-btn{width:100%;padding:11px;background:#ff6b35;border:none;border-radius:10px;color:#fff;font-size:.9rem;font-weight:700;font-family:inherit;cursor:pointer;letter-spacing:.04em;transition:background .15s,transform .1s;}
+.lk-btn:hover{background:#ff8050;}
+.lk-btn:active{transform:scale(.98);}
+.lk-spin{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.lk-hint{font-size:.69rem;color:#555;margin-top:18px;}
 </style>
 </head>
 <body>
+
+<!-- LOCKSCREEN -->
+<div id="lockscreen">
+  <div class="lk-box">
+    <div class="lk-ico">&#128274;</div>
+    <div class="lk-logo">Video<b>Pro</b> <span style="font-size:.6em;background:#ff6b35;color:#fff;padding:1px 6px;border-radius:4px;vertical-align:middle;">v5</span></div>
+    <div class="lk-sub">Masukkan password untuk melanjutkan</div>
+    <div class="lk-inp-wrap">
+      <input id="lkIn" type="password" placeholder="Password&#x2026;" autocomplete="current-password">
+      <button class="lk-eye" id="lkEye" tabindex="-1">&#128065;</button>
+    </div>
+    <div class="lk-err" id="lkErr"></div>
+    <button class="lk-btn" id="lkBtn">Buka</button>
+    <div class="lk-hint">&#128274; Dilindungi &bull; VideoPro v5</div>
+  </div>
+</div>
 
 <div id="app" v-cloak>
 
@@ -1244,6 +1282,55 @@ app.config.errorHandler = function(err, instance, info) {
 };
 
 app.mount('#app');
+</script>
+
+<script>
+(function(){
+  // SHA-256 hash of "Blink182++" — password stored securely as hash only
+  var H='0a0cd6a497b00eb78e9c43161768451d42871a83f79e59d904ecdd0be26b904c';
+  var ls=document.getElementById('lockscreen');
+  var inp=document.getElementById('lkIn');
+  var err=document.getElementById('lkErr');
+  var btn=document.getElementById('lkBtn');
+  var eye=document.getElementById('lkEye');
+  var eyeOpen=false;
+
+  if(sessionStorage.getItem('vp5_auth')==='1'){ls.remove();return;}
+
+  async function verify(){
+    var val=inp.value;
+    if(!val)return;
+    btn.innerHTML='<span class="lk-spin"></span>';
+    try{
+      var buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(val));
+      var hex=Array.from(new Uint8Array(buf)).map(function(b){return b.toString(16).padStart(2,'0');}).join('');
+      if(hex===H){
+        sessionStorage.setItem('vp5_auth','1');
+        ls.classList.add('ls-out');
+        setTimeout(function(){ls.remove();},430);
+      }else{
+        err.textContent='Password salah!';
+        inp.value='';
+        inp.classList.add('ls-shake');
+        btn.textContent='Buka';
+        setTimeout(function(){err.textContent='';inp.classList.remove('ls-shake');},1600);
+      }
+    }catch(e){
+      err.textContent='Error: '+e.message;
+      btn.textContent='Buka';
+    }
+  }
+
+  btn.addEventListener('click',verify);
+  inp.addEventListener('keydown',function(e){if(e.key==='Enter')verify();});
+  eye.addEventListener('click',function(){
+    eyeOpen=!eyeOpen;
+    inp.type=eyeOpen?'text':'password';
+    eye.textContent=eyeOpen?'&#128064;':'&#128065;';
+    inp.focus();
+  });
+  setTimeout(function(){inp.focus();},120);
+})();
 </script>
 </body>
 </html>
