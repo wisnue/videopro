@@ -1,0 +1,1081 @@
+<!-- 
+  Media Player Pro - Dark Mode Ready
+  Support iframe & direct URL | Responsive | Modern UI
+-->
+
+<div class="media-app" id="mediaApp">
+  <!-- Header -->
+  <div class="app-header">
+    <div class="header-badge">
+      <span class="badge-dot"></span>
+      <span>Media Player</span>
+    </div>
+    <h1 class="app-title">
+      <span class="title-primary">Video</span>
+      <span class="title-secondary">Player</span>
+    </h1>
+    <p class="app-subtitle">Putar video dari kode iframe atau tautan langsung</p>
+    
+    <!-- Dark Mode Toggle -->
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+      <svg class="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="5"/>
+        <line x1="12" y1="1" x2="12" y2="3"/>
+        <line x1="12" y1="21" x2="12" y2="23"/>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+        <line x1="1" y1="12" x2="3" y2="12"/>
+        <line x1="21" y1="12" x2="23" y2="12"/>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+      </svg>
+      <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Mode Tabs -->
+  <div class="mode-tabs">
+    <button class="tab-btn active" data-tab="iframe">
+      <span>📝</span> Kode Iframe
+    </button>
+    <button class="tab-btn" data-tab="url">
+      <span>🔗</span> Tautan Video
+    </button>
+  </div>
+
+  <!-- Tab: Iframe -->
+  <div id="iframeTab" class="tab-content active">
+    <div class="input-group">
+      <label class="input-label">
+        <span>💻</span> Kode Iframe
+      </label>
+      <textarea id="iframeCode" rows="4" class="code-input" placeholder='&lt;iframe src="https://vidara.to/e/6bBGfJo1Y7UC" width="640" height="360" frameborder="0" allowfullscreen&gt;&lt;/iframe&gt;'></textarea>
+      <div class="button-row">
+        <button id="playIframe" class="btn btn-primary">
+          <span>▶</span> Putar Video
+        </button>
+        <button id="fullscreenIframe" class="btn btn-secondary">
+          <span>🖥️</span> Layar Penuh
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab: URL -->
+  <div id="urlTab" class="tab-content">
+    <div class="input-group">
+      <label class="input-label">
+        <span>🔗</span> Tautan Video
+      </label>
+      <div class="url-input-wrapper">
+        <input type="text" id="videoUrl" class="url-input" placeholder="https://www.youtube.com/embed/... atau https://vidara.to/e/...">
+        <button id="playUrl" class="btn btn-primary">▶ Putar</button>
+      </div>
+      <div class="quick-links">
+        <span class="quick-label">Contoh:</span>
+        <button class="quick-chip" data-url="https://www.youtube.com/embed/dQw4w9WgXcQ">YouTube</button>
+        <button class="quick-chip" data-url="https://vidara.to/e/6bBGfJo1Y7UC">Vidara</button>
+        <button class="quick-chip" data-url="https://player.vimeo.com/video/76979871">Vimeo</button>
+      </div>
+      <button id="fullscreenUrl" class="btn btn-secondary full-width">
+        <span>🖥️</span> Layar Penuh
+      </button>
+    </div>
+  </div>
+
+  <!-- Player Area -->
+  <div class="player-card">
+    <div class="player-header-bar">
+      <div class="status-indicator">
+        <span class="status-light" id="statusLight"></span>
+        <span id="statusText" class="status-text">Siap memutar</span>
+      </div>
+      <div class="player-hint">⛶ Klik kanan → layar penuh</div>
+    </div>
+    <div id="videoPlayer" class="video-player">
+      <div class="empty-state">
+        <div class="empty-icon">🎬</div>
+        <p class="empty-title">Belum ada video</p>
+        <p class="empty-desc">Masukkan kode iframe atau tautan di atas</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Features -->
+  <div class="features">
+    <div class="feature">
+      <span class="feature-emoji">📌</span>
+      <div>
+        <h4>Kode Iframe</h4>
+        <p>Salin dari YouTube, Vidara, Vimeo</p>
+      </div>
+    </div>
+    <div class="feature">
+      <span class="feature-emoji">⚡</span>
+      <div>
+        <h4>Layar Penuh</h4>
+        <p>Buka di tab baru, tampilan full</p>
+      </div>
+    </div>
+    <div class="feature">
+      <span class="feature-emoji">🌙</span>
+      <div>
+        <h4>Dark Mode</h4>
+        <p>Otomatis sesuai tema website</p>
+      </div>
+    </div>
+  </div>
+  
+  <div class="footer-note">
+    <p>✓ Mendukung YouTube, Vimeo, Vidara, Dailymotion & platform lainnya</p>
+  </div>
+</div>
+
+<script>
+(function() {
+  // ==================== DOM Elements ====================
+  const iframeTab = document.getElementById('iframeTab');
+  const urlTab = document.getElementById('urlTab');
+  const tabBtns = document.querySelectorAll('.tab-btn');
+  const videoContainer = document.getElementById('videoPlayer');
+  const statusLight = document.getElementById('statusLight');
+  const statusTextEl = document.getElementById('statusText');
+  
+  const iframeInput = document.getElementById('iframeCode');
+  const playIframeBtn = document.getElementById('playIframe');
+  const fullscreenIframeBtn = document.getElementById('fullscreenIframe');
+  
+  const urlInput = document.getElementById('videoUrl');
+  const playUrlBtn = document.getElementById('playUrl');
+  const fullscreenUrlBtn = document.getElementById('fullscreenUrl');
+  
+  let currentTab = 'iframe';
+  
+  // ==================== Dark Mode ====================
+  function setTheme(isDark) {
+    const app = document.getElementById('mediaApp');
+    if (isDark) {
+      app.setAttribute('data-theme', 'dark');
+      localStorage.setItem('mediaPlayerTheme', 'dark');
+    } else {
+      app.setAttribute('data-theme', 'light');
+      localStorage.setItem('mediaPlayerTheme', 'light');
+    }
+  }
+  
+  function toggleTheme() {
+    const current = document.getElementById('mediaApp').getAttribute('data-theme');
+    setTheme(current !== 'dark');
+  }
+  
+  function detectSystemTheme() {
+    const saved = localStorage.getItem('mediaPlayerTheme');
+    if (saved) {
+      setTheme(saved === 'dark');
+      return;
+    }
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    setTheme(prefersDark);
+  }
+  
+  // Watch system theme change
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+    if (!localStorage.getItem('mediaPlayerTheme')) {
+      setTheme(e.matches);
+    }
+  });
+  
+  // ==================== UI Helpers ====================
+  function updateStatus(isPlaying, message, isError = false) {
+    statusTextEl.textContent = message;
+    if (isPlaying) {
+      statusLight.className = 'status-light playing';
+    } else if (isError) {
+      statusLight.className = 'status-light error';
+    } else {
+      statusLight.className = 'status-light';
+    }
+  }
+  
+  function showEmptyState() {
+    videoContainer.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🎬</div>
+        <p class="empty-title">Belum ada video</p>
+        <p class="empty-desc">Masukkan kode iframe atau tautan di atas</p>
+      </div>
+    `;
+  }
+  
+  function showLoading() {
+    videoContainer.innerHTML = `
+      <div class="loading-state">
+        <div class="loading-spinner"></div>
+        <p class="loading-text">Memuat video...</p>
+      </div>
+    `;
+    updateStatus(true, 'Memuat...');
+  }
+  
+  function showError(message) {
+    videoContainer.innerHTML = `
+      <div class="error-state">
+        <div class="error-icon">⚠️</div>
+        <p class="error-title">Gagal memuat video</p>
+        <p class="error-msg">${message || 'Periksa kembali kode atau tautan Anda'}</p>
+      </div>
+    `;
+    updateStatus(false, message || 'Gagal memuat', true);
+  }
+  
+  // ==================== Video Helpers ====================
+  function extractSrcFromIframe(code) {
+    const match = code.match(/src=["']([^"']+)["']/i);
+    return match ? match[1] : null;
+  }
+  
+  function getCleanIframe(input) {
+    const match = input.match(/<iframe[^>]*src=["'][^"']*["'][^>]*>/i);
+    return match ? match[0] : null;
+  }
+  
+  function normalizeYouTubeUrl(url) {
+    if (url.includes('youtube.com/watch') || url.includes('youtu.be/')) {
+      let videoId = '';
+      if (url.includes('youtu.be/')) {
+        videoId = url.split('youtu.be/')[1]?.split('?')[0]?.split('&')[0];
+      } else if (url.includes('v=')) {
+        videoId = url.split('v=')[1]?.split('&')[0];
+      }
+      if (videoId) return `https://www.youtube.com/embed/${videoId}`;
+    }
+    return url;
+  }
+  
+  // ==================== Play Functions ====================
+  function playVideo(src, isUrl = false) {
+    if (!src) {
+      showError(isUrl ? 'Masukkan tautan video' : 'Kode iframe tidak valid');
+      return false;
+    }
+    
+    let finalSrc = isUrl ? normalizeYouTubeUrl(src) : src;
+    
+    showLoading();
+    
+    setTimeout(() => {
+      try {
+        const iframeHtml = `
+          <iframe 
+            src="${finalSrc}"
+            class="responsive-iframe"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen>
+          </iframe>
+        `;
+        videoContainer.innerHTML = iframeHtml;
+        updateStatus(true, 'Sedang diputar');
+        
+        setTimeout(() => {
+          if (statusTextEl.textContent === 'Sedang diputar') {
+            // keep status
+          }
+        }, 2000);
+        return true;
+      } catch (e) {
+        showError('Gagal memutar video');
+        return false;
+      }
+    }, 100);
+  }
+  
+  function playFromIframe() {
+    const raw = iframeInput.value.trim();
+    if (!raw) {
+      showError('Masukkan kode iframe terlebih dahulu');
+      return;
+    }
+    
+    const cleanIframe = getCleanIframe(raw);
+    if (!cleanIframe) {
+      showError('Format tidak valid! Masukkan tag iframe yang benar');
+      return;
+    }
+    
+    const videoSrc = extractSrcFromIframe(cleanIframe);
+    if (!videoSrc) {
+      showError('Tidak dapat menemukan URL video dalam iframe');
+      return;
+    }
+    
+    playVideo(videoSrc, false);
+  }
+  
+  function playFromUrl() {
+    let url = urlInput.value.trim();
+    if (!url) {
+      showError('Masukkan tautan video');
+      return;
+    }
+    
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      showError('Tautan harus diawali http:// atau https://');
+      return;
+    }
+    
+    playVideo(url, true);
+  }
+  
+  // ==================== Fullscreen ====================
+  function openFullscreen(playerSrc) {
+    if (!playerSrc) return;
+    
+    const fullHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Media Player - Full Mode</title>
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body {
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: system-ui, sans-serif;
+            padding: 20px;
+          }
+          .player-wrap {
+            max-width: 1200px;
+            width: 100%;
+            background: #111;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+          }
+          .video-box {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%;
+            background: #000;
+          }
+          .video-box iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+          }
+          .action-bar {
+            padding: 16px;
+            text-align: center;
+            background: #1a1a1a;
+          }
+          button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 40px;
+            font-size: 14px;
+            cursor: pointer;
+            margin: 0 6px;
+            transition: all 0.2s;
+          }
+          button:hover { background: #2563eb; transform: scale(1.02); }
+          .btn-out { background: transparent; border: 1px solid #3b82f6; }
+        </style>
+      </head>
+      <body>
+        <div class="player-wrap">
+          <div class="video-box">
+            <iframe src="${playerSrc}" frameborder="0" allowfullscreen></iframe>
+          </div>
+          <div class="action-bar">
+            <button onclick="window.close()">✖️ Tutup</button>
+            <button class="btn-out" onclick="history.back()">⬅️ Kembali</button>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+    
+    const blob = new Blob([fullHtml], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  
+  function fullscreenFromIframe() {
+    const raw = iframeInput.value.trim();
+    const clean = getCleanIframe(raw);
+    const src = clean ? extractSrcFromIframe(clean) : null;
+    if (!src) {
+      showError('Masukkan kode iframe terlebih dahulu');
+      return;
+    }
+    openFullscreen(src);
+  }
+  
+  function fullscreenFromUrl() {
+    let url = urlInput.value.trim();
+    if (!url) {
+      showError('Masukkan tautan video');
+      return;
+    }
+    if (!url.startsWith('http')) {
+      showError('Tautan tidak valid');
+      return;
+    }
+    openFullscreen(url);
+  }
+  
+  // ==================== Tab Switching ====================
+  function switchTab(tab) {
+    currentTab = tab;
+    
+    tabBtns.forEach(btn => {
+      if (btn.getAttribute('data-tab') === tab) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+    
+    if (tab === 'iframe') {
+      iframeTab.classList.add('active');
+      urlTab.classList.remove('active');
+    } else {
+      iframeTab.classList.remove('active');
+      urlTab.classList.add('active');
+    }
+    
+    showEmptyState();
+    updateStatus(false, 'Siap memutar');
+  }
+  
+  // ==================== Event Listeners ====================
+  playIframeBtn.addEventListener('click', playFromIframe);
+  fullscreenIframeBtn.addEventListener('click', fullscreenFromIframe);
+  playUrlBtn.addEventListener('click', playFromUrl);
+  fullscreenUrlBtn.addEventListener('click', fullscreenFromUrl);
+  
+  // Tab switching
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      switchTab(btn.getAttribute('data-tab'));
+    });
+  });
+  
+  // Example chips
+  document.querySelectorAll('.quick-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const url = chip.getAttribute('data-url');
+      if (url) {
+        urlInput.value = url;
+        playFromUrl();
+      }
+    });
+  });
+  
+  // Theme toggle
+  document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+  
+  // Enter key on URL input
+  urlInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') playFromUrl();
+  });
+  
+  // Set defaults
+  iframeInput.value = '<iframe src="https://vidara.to/e/6bBGfJo1Y7UC" width="640" height="360" frameborder="0" allowfullscreen></iframe>';
+  urlInput.value = 'https://vidara.to/e/6bBGfJo1Y7UC';
+  
+  // Initialize
+  detectSystemTheme();
+  showEmptyState();
+})();
+</script>
+
+<style>
+/* ==================== CSS Variables & Base ==================== */
+.media-app {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-input: #ffffff;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --border: #e2e8f0;
+  --border-light: #f1f5f9;
+  --accent: #3b82f6;
+  --accent-dark: #2563eb;
+  --accent-glow: rgba(59,130,246,0.2);
+  --success: #22c55e;
+  --error: #ef4444;
+  --shadow: 0 4px 12px rgba(0,0,0,0.05);
+  --shadow-hover: 0 8px 25px rgba(0,0,0,0.1);
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.media-app[data-theme="dark"] {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-card: #1e293b;
+  --bg-input: #334155;
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --border: #334155;
+  --border-light: #1e293b;
+  --shadow: 0 4px 12px rgba(0,0,0,0.3);
+  --shadow-hover: 0 8px 25px rgba(0,0,0,0.4);
+}
+
+.media-app {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  background: var(--bg-secondary);
+  border-radius: 48px;
+  transition: var(--transition);
+}
+
+/* ==================== Header ==================== */
+.app-header {
+  text-align: center;
+  padding: 24px 20px 20px;
+  position: relative;
+}
+
+.header-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--accent-glow);
+  padding: 6px 16px;
+  border-radius: 60px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--accent);
+  margin-bottom: 20px;
+}
+
+.badge-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--accent);
+  border-radius: 50%;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.2); }
+}
+
+.app-title {
+  font-size: clamp(28px, 6vw, 44px);
+  font-weight: 700;
+  margin: 0 0 10px 0;
+  letter-spacing: -0.02em;
+}
+
+.title-primary {
+  background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.title-secondary {
+  color: var(--text-primary);
+}
+
+.app-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 40px;
+  padding: 8px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: var(--transition);
+  color: var(--text-secondary);
+}
+
+.theme-toggle:hover {
+  background: var(--bg-secondary);
+  transform: scale(1.02);
+}
+
+.theme-toggle .sun-icon,
+.theme-toggle .moon-icon {
+  transition: var(--transition);
+}
+
+.media-app[data-theme="light"] .moon-icon { display: none; }
+.media-app[data-theme="light"] .sun-icon { display: block; }
+.media-app[data-theme="dark"] .sun-icon { display: none; }
+.media-app[data-theme="dark"] .moon-icon { display: block; }
+
+/* ==================== Mode Tabs ==================== */
+.mode-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 60px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.tab-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+  box-shadow: 0 4px 12px var(--accent-glow);
+}
+
+.tab-btn:hover:not(.active) {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ==================== Tab Content ==================== */
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Input Groups */
+.input-group {
+  background: var(--bg-card);
+  border-radius: 28px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border-light);
+  transition: var(--transition);
+}
+
+.input-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  font-size: 15px;
+}
+
+.code-input {
+  width: 100%;
+  padding: 16px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  color: var(--text-primary);
+  resize: vertical;
+  box-sizing: border-box;
+  transition: var(--transition);
+}
+
+.code-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.url-input-wrapper {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.url-input {
+  flex: 1;
+  padding: 14px 18px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 60px;
+  font-size: 14px;
+  color: var(--text-primary);
+  transition: var(--transition);
+}
+
+.url-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.button-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.btn {
+  padding: 12px 28px;
+  border-radius: 60px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+  color: white;
+  box-shadow: 0 2px 8px var(--accent-glow);
+}
+
+.btn-primary:hover {
+  transform: scale(1.02);
+  box-shadow: 0 6px 20px var(--accent-glow);
+}
+
+.btn-secondary {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+
+.btn-secondary:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.full-width {
+  width: 100%;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+/* Quick Links */
+.quick-links {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.quick-label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.quick-chip {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  padding: 5px 14px;
+  border-radius: 30px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.quick-chip:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+  transform: translateY(-1px);
+}
+
+/* ==================== Player Card ==================== */
+.player-card {
+  background: var(--bg-card);
+  border-radius: 28px;
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border-light);
+  transition: var(--transition);
+}
+
+.player-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-light {
+  width: 8px;
+  height: 8px;
+  background: var(--text-muted);
+  border-radius: 50%;
+  transition: var(--transition);
+}
+
+.status-light.playing {
+  background: var(--success);
+  box-shadow: 0 0 8px var(--success);
+  animation: pulse-green 1.5s infinite;
+}
+
+@keyframes pulse-green {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.status-light.error {
+  background: var(--error);
+}
+
+.status-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.player-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.video-player {
+  background: #0f172a;
+  border-radius: 20px;
+  min-height: 380px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.responsive-iframe {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: none;
+  display: block;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.empty-icon {
+  font-size: 56px;
+  margin-bottom: 16px;
+  opacity: 0.6;
+}
+
+.empty-title {
+  margin: 0 0 8px 0;
+  color: var(--text-muted);
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.empty-desc {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+/* Loading State */
+.loading-state {
+  text-align: center;
+  padding: 80px 20px;
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid rgba(59,130,246,0.2);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  margin: 0 auto 16px;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* Error State */
+.error-state {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.error-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.error-title {
+  color: var(--error);
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+}
+
+.error-msg {
+  color: var(--text-muted);
+  font-size: 13px;
+  margin: 0;
+}
+
+/* Features */
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: var(--bg-card);
+  padding: 16px;
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border-light);
+  transition: var(--transition);
+}
+
+.feature:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+
+.feature-emoji {
+  font-size: 28px;
+}
+
+.feature h4 {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.feature p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* Footer */
+.footer-note {
+  text-align: center;
+  padding: 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+  background: var(--bg-card);
+  border-radius: 60px;
+  border: 1px solid var(--border-light);
+}
+
+.footer-note p {
+  margin: 0;
+}
+
+/* ==================== Responsive ==================== */
+@media (max-width: 768px) {
+  .media-app {
+    padding: 12px;
+    border-radius: 32px;
+  }
+  
+  .input-group, .player-card {
+    padding: 16px;
+  }
+  
+  .button-row, .url-input-wrapper {
+    flex-direction: column;
+  }
+  
+  .btn {
+    justify-content: center;
+  }
+  
+  .video-player {
+    min-height: 240px;
+  }
+  
+  .mode-tabs {
+    gap: 8px;
+  }
+  
+  .tab-btn {
+    padding: 8px 18px;
+    font-size: 13px;
+  }
+  
+  .theme-toggle {
+    top: 16px;
+    right: 16px;
+    padding: 6px 10px;
+  }
+}
+</style>
