@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>VideoPro v5</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+
+    :root {
+      --acc:    #ff6b35;
+      --acc-h:  #ff8050;
+      --danger: #c0392b;
+      --ok:     #27ae60;
+      --bg:     #0f0f0f;
+      --bg2:    #181818;
+      --bg3:    #232323;
+      --bg4:    #2c2c2c;
+      --t1:     #e8e8e8;
+      --t2:     #999;
+      --bdr:    #303030;
+      --sw:     300px;
+    }
+    body.light {
+      --bg:#f0f0f0; --bg2:#fff; --bg3:#f5f5f5; --bg4:#e5e5e5;
+      --t1:#1a1a1a; --t2:#666; --bdr:#d5d5d5;
+    }
+    body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--t1); height:100vh; display:flex; flex-direction:column; overflow:hidden; }
+
+    ::-webkit-scrollbar { width:5px; height:5px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:var(--bdr); border-radius:3px; }
+
+    /* HEADER */
+    header { background:var(--bg2); border-bottom:1px solid var(--bdr); padding:8px 14px; display:flex; align-items:center; gap:10px; flex-shrink:0; z-index:30; }
+    .logo { font-size:1.1rem; font-weight:800; color:var(--acc); white-space:nowrap; }
+    .logo b { color:var(--t1); }
+    .ver { font-size:.58rem; background:var(--acc); color:#fff; padding:1px 5px; border-radius:3px; margin-left:3px; vertical-align:middle; }
+    .sw { flex:1; max-width:380px; position:relative; }
+    .sw input { width:100%; background:var(--bg3); border:1px solid var(--bdr); border-radius:20px; padding:6px 12px 6px 32px; color:var(--t1); font-size:.83rem; outline:none; font-family:inherit; transition:border-color .2s; }
+    .sw input:focus { border-color:var(--acc); }
+    .sw-ico { position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--t2); pointer-events:none; line-height:0; }
+    .gsearch-badge { position:absolute; right:10px; top:50%; transform:translateY(-50%); font-size:.6rem; background:var(--acc); color:#fff; padding:1px 5px; border-radius:8px; cursor:pointer; }
+    .hr { margin-left:auto; display:flex; gap:5px; align-items:center; }
+
+    /* BUTTONS */
+    .btn { display:inline-flex; align-items:center; gap:5px; padding:6px 11px; border:1px solid var(--bdr); border-radius:6px; background:var(--bg3); color:var(--t1); font-size:.81rem; font-family:inherit; cursor:pointer; white-space:nowrap; transition:background .12s,border-color .12s,color .12s; }
+    .btn:hover { background:var(--bg4); }
+    .btn.pa { background:var(--acc); border-color:var(--acc); color:#fff; }
+    .btn.pa:hover { background:var(--acc-h); }
+    .btn.pd { background:transparent; border-color:var(--danger); color:var(--danger); }
+    .btn.pd:hover { background:var(--danger); color:#fff; }
+    .btn.ok { border-color:var(--ok); color:var(--ok); }
+    .btn.ok:hover { background:var(--ok); color:#fff; }
+    .btn.dash { border-style:dashed; }
+    .ico { background:none; border:none; color:var(--t2); font-size:1rem; cursor:pointer; padding:4px 6px; border-radius:4px; line-height:1; font-family:inherit; transition:.12s; }
+    .ico:hover { color:var(--t1); background:var(--bg3); }
+    .ico.on { color:var(--acc); }
+    .mini { background:none; border:1px solid var(--bdr); color:var(--t2); font-size:.7rem; cursor:pointer; padding:2px 5px; border-radius:4px; font-family:inherit; transition:.12s; }
+    .mini:hover { background:var(--bg4); color:var(--t1); }
+    .mini.pd { border-color:var(--danger); color:var(--danger); }
+    .mini.pd:hover { background:var(--danger); color:#fff; }
+
+    /* BANNERS */
+    .rbanner { background:#0b180b; border-bottom:1px solid #2d6a2d; padding:6px 14px; display:flex; align-items:center; gap:10px; font-size:.82rem; flex-shrink:0; }
+    .rbanner p { flex:1; }
+    .rbanner strong { color:#5fb85f; }
+
+    /* Batch action bar */
+    .batch-bar { background:var(--bg2); border-bottom:2px solid var(--acc); padding:6px 14px; display:flex; align-items:center; gap:8px; flex-shrink:0; font-size:.82rem; }
+    .batch-bar strong { color:var(--acc); }
+
+    /* LAYOUT */
+    .main { flex:1; display:flex; overflow:hidden; min-height:0; }
+    .sidebar { width:var(--sw); min-width:180px; max-width:540px; display:flex; flex-direction:column; background:var(--bg2); border-right:1px solid var(--bdr); flex-shrink:0; overflow:hidden; transition:margin .2s; }
+    .sidebar.off { margin-left:calc(-1 * var(--sw) - 4px); }
+    .rsz { width:4px; background:transparent; cursor:col-resize; flex-shrink:0; transition:background .15s; }
+    .rsz:hover,.rsz.active { background:var(--acc); }
+
+    /* PLAYLIST SELECTOR */
+    .pl-bar { display:flex; gap:4px; padding:6px 8px; border-bottom:1px solid var(--bdr); flex-shrink:0; overflow-x:auto; }
+    .pl-chip { padding:3px 9px; border:1px solid var(--bdr); border-radius:12px; font-size:.72rem; cursor:pointer; white-space:nowrap; background:var(--bg3); color:var(--t2); transition:.12s; user-select:none; }
+    .pl-chip:hover { border-color:var(--acc); color:var(--t1); }
+    .pl-chip.on { background:var(--acc); border-color:var(--acc); color:#fff; }
+    .pl-chip.add { border-style:dashed; }
+    .pl-chip.del { color:var(--danger); border-color:var(--danger); padding:3px 7px; }
+    .pl-chip.del:hover { background:var(--danger); color:#fff; }
+
+    /* TABS */
+    .tabs { display:flex; border-bottom:1px solid var(--bdr); flex-shrink:0; }
+    .tab { flex:1; padding:7px 2px; text-align:center; font-size:.74rem; cursor:pointer; border-bottom:2px solid transparent; color:var(--t2); transition:.12s; white-space:nowrap; }
+    .tab.on { border-bottom-color:var(--acc); color:var(--t1); font-weight:600; }
+    .badge { background:var(--acc); color:#fff; border-radius:8px; font-size:.6rem; padding:1px 4px; margin-left:2px; }
+
+    /* TOOLBAR */
+    .tb { padding:5px 8px; border-bottom:1px solid var(--bdr); display:flex; gap:5px; align-items:center; flex-shrink:0; }
+    .tb label { font-size:.7rem; color:var(--t2); white-space:nowrap; }
+    .fsel { background:var(--bg3); border:1px solid var(--bdr); border-radius:4px; color:var(--t1); font-size:.72rem; padding:3px 5px; font-family:inherit; outline:none; flex:1; min-width:0; cursor:pointer; }
+    .view-btns { display:flex; gap:2px; margin-left:auto; flex-shrink:0; }
+    .vb { background:none; border:1px solid var(--bdr); border-radius:4px; padding:3px 7px; cursor:pointer; color:var(--t2); font-size:.8rem; line-height:1; transition:.12s; }
+    .vb:hover,.vb.on { background:var(--bg4); color:var(--t1); }
+
+    /* TAG FILTER */
+    .tf { padding:4px 8px; border-bottom:1px solid var(--bdr); display:flex; gap:3px; overflow-x:auto; flex-shrink:0; }
+    .tg { padding:2px 7px; border:1px solid var(--bdr); border-radius:10px; font-size:.67rem; cursor:pointer; white-space:nowrap; color:var(--t2); }
+    .tg:hover,.tg.on { border-color:var(--acc); }
+    .tg.on { background:var(--acc); color:#fff; border-color:var(--acc); }
+
+    /* CAT FILTER */
+    .cat-row { display:flex; gap:3px; padding:4px 8px; overflow-x:auto; flex-shrink:0; border-bottom:1px solid var(--bdr); }
+    .chip { padding:2px 8px; border:1px solid var(--bdr); border-radius:10px; font-size:.69rem; cursor:pointer; white-space:nowrap; color:var(--t2); }
+    .chip:hover,.chip.on { border-color:var(--acc); }
+    .chip.on { background:var(--acc); color:#fff; }
+
+    /* VIDEO LIST */
+    .vl { flex:1; overflow-y:auto; min-height:0; }
+    .vi { display:flex; gap:8px; padding:7px 10px; cursor:pointer; border-bottom:1px solid var(--bdr); transition:background .1s; position:relative; align-items:flex-start; }
+    .vi:hover { background:var(--bg3); }
+    .vi.on { background:var(--bg4); border-left:3px solid var(--acc); }
+    .vi.pinned-item { background:rgba(255,107,53,.05); }
+    .vi.dragging { opacity:.35; }
+    .vi.over { border-top:2px solid var(--acc); }
+    .vi.watched-dim { opacity:.55; }
+    .vi-sel { width:15px; height:15px; flex-shrink:0; margin-top:14px; accent-color:var(--acc); cursor:pointer; }
+    .vt { width:70px; height:40px; object-fit:cover; border-radius:4px; flex-shrink:0; background:var(--bg4); }
+    .vt-ph { width:70px; height:40px; border-radius:4px; background:var(--bg4); flex-shrink:0; display:flex; align-items:center; justify-content:center; color:var(--t2); font-size:.95rem; position:relative; }
+    .vt-wrap { position:relative; flex-shrink:0; }
+    .vt-prog { position:absolute; bottom:0; left:0; right:0; height:3px; background:rgba(255,255,255,.12); border-radius:0 0 4px 4px; overflow:hidden; }
+    .vt-prog-fill { height:100%; background:var(--acc); }
+    .vi-info { flex:1; min-width:0; }
+    .vi-title { font-size:.81rem; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .vi-title mark { background:rgba(255,107,53,.28); color:inherit; border-radius:2px; }
+    .vi-meta { font-size:.67rem; color:var(--t2); margin-top:2px; display:flex; gap:5px; flex-wrap:wrap; align-items:center; }
+    .stars { color:#f5a623; font-size:.72rem; letter-spacing:-1px; cursor:pointer; }
+    .vi-tags { display:flex; gap:2px; flex-wrap:wrap; margin-top:3px; }
+    .vt-chip { padding:1px 5px; background:var(--bg4); border:1px solid var(--bdr); border-radius:8px; font-size:.6rem; color:var(--t2); cursor:pointer; }
+    .vt-chip:hover { border-color:var(--acc); }
+    .vi-act { display:flex; gap:2px; flex-direction:column; align-items:flex-end; opacity:0; transition:opacity .1s; flex-shrink:0; }
+    .vi:hover .vi-act { opacity:1; }
+    .vi-pin { position:absolute; top:5px; right:5px; font-size:.68rem; }
+    .vi-watched-badge { position:absolute; top:5px; left:5px; font-size:.6rem; background:var(--ok); color:#fff; border-radius:3px; padding:1px 3px; }
+    .q-num { position:absolute; bottom:5px; right:5px; background:var(--acc); color:#fff; font-size:.58rem; width:15px; height:15px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+
+    /* GRID VIEW */
+    .vl.grid-view { display:grid; grid-template-columns:repeat(auto-fill,minmax(145px,1fr)); gap:8px; padding:8px; overflow-y:auto; background:var(--bg); }
+    .vi-card { background:var(--bg2); border-radius:8px; overflow:hidden; cursor:pointer; transition:transform .12s,box-shadow .12s,border-color .12s; border:1px solid var(--bdr); }
+    .vi-card:hover { transform:translateY(-2px); box-shadow:0 5px 18px rgba(0,0,0,.45); border-color:var(--acc); }
+    .vi-card.on { border-color:var(--acc); box-shadow:0 0 0 2px rgba(255,107,53,.4); }
+    .vi-card-thumb { width:100%; aspect-ratio:16/9; background:var(--bg4); position:relative; overflow:hidden; }
+    .vi-card-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
+    .vi-card-ph { width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:1.4rem; color:var(--t2); }
+    .vi-play-ov { position:absolute; inset:0; background:rgba(0,0,0,.48); display:flex; align-items:center; justify-content:center; font-size:1.5rem; opacity:0; transition:opacity .15s; }
+    .vi-card:hover .vi-play-ov { opacity:1; }
+    .vi-card-prog { height:2px; background:var(--bg4); }
+    .vi-card-prog-fill { height:100%; background:var(--acc); }
+    .vi-card-body { padding:6px 8px 8px; }
+    .vi-card-title { font-size:.75rem; font-weight:600; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; line-height:1.35; }
+    .vi-card-meta { font-size:.64rem; color:var(--t2); margin-top:3px; display:flex; gap:5px; }
+
+    /* COMPACT LIST */
+    .compact .vi { padding:4px 10px; }
+    .compact .vt,.compact .vt-ph { width:48px; height:28px; }
+
+    /* GLOBAL SEARCH */
+    .gs-pl-label { font-size:.68rem; font-weight:700; color:var(--acc); padding:5px 10px 2px; text-transform:uppercase; letter-spacing:.4px; border-bottom:1px solid var(--bdr); }
+
+    /* PANEL HEADER */
+    .pn-hd { padding:5px 10px; font-size:.72rem; font-weight:700; color:var(--t2); text-transform:uppercase; letter-spacing:.4px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--bdr); flex-shrink:0; }
+
+    /* STATS */
+    .sg { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:8px; padding:10px; }
+    .sc { background:var(--bg3); border:1px solid var(--bdr); border-radius:8px; padding:10px 12px; }
+    .sc-n { font-size:1.4rem; font-weight:700; color:var(--acc); }
+    .sc-l { font-size:.7rem; color:var(--t2); margin-top:2px; }
+    .tl { padding:0 10px 12px; }
+    .tl h3 { font-size:.78rem; color:var(--t2); margin-bottom:6px; padding-top:10px; }
+    .ti2 { display:flex; align-items:center; gap:7px; padding:4px 0; border-bottom:1px solid var(--bdr); font-size:.77rem; cursor:pointer; }
+    .ti2:hover { color:var(--acc); }
+    .tr { width:16px; color:var(--acc); font-weight:700; flex-shrink:0; font-size:.72rem; }
+    .bar-row { display:flex; align-items:center; gap:5px; margin:3px 0; font-size:.7rem; }
+    .bar-label { width:72px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--t2); flex-shrink:0; }
+    .bar-track { flex:1; height:5px; background:var(--bg4); border-radius:3px; overflow:hidden; }
+    .bar-fill { height:100%; background:var(--acc); border-radius:3px; transition:width .6s ease; }
+    .bar-val { width:28px; text-align:right; color:var(--t2); flex-shrink:0; font-size:.68rem; }
+
+    /* SIDEBAR FOOTER */
+    .sf { border-top:1px solid var(--bdr); flex-shrink:0; }
+    .sf-main { display:flex; gap:4px; padding:5px 8px; }
+    .sf-file { padding:4px 8px 5px; border-top:1px solid var(--bdr); display:flex; flex-direction:column; gap:4px; }
+    .file-ind { font-size:.7rem; color:var(--ok); display:flex; align-items:center; gap:4px; overflow:hidden; }
+    .file-ind .fn { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+    /* PLAYER */
+    .pcol { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
+    .ps { flex:1; background:#000; position:relative; overflow:hidden; min-height:0; }
+    .ps iframe { width:100%; height:100%; border:none; display:block; }
+    .ph { width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; color:var(--t2); }
+    .ph-ico { font-size:3.5rem; }
+
+    /* AUTOPLAY OVERLAY */
+    .ap-ov { position:absolute; bottom:0; left:0; right:0; background:linear-gradient(transparent,rgba(0,0,0,.82)); padding:16px 20px 12px; display:flex; align-items:flex-end; gap:12px; z-index:10; }
+    .ap-txt { flex:1; font-size:.84rem; }
+    .ap-txt strong { display:block; font-size:.95rem; margin-bottom:2px; color:#fff; }
+    .ap-txt span { color:rgba(255,255,255,.7); font-size:.78rem; }
+    .ap-bar { height:3px; background:rgba(255,255,255,.2); border-radius:2px; margin-top:5px; overflow:hidden; }
+    .ap-bar-fill { height:100%; background:var(--acc); transition:width 1s linear; }
+
+    /* QUEUE BANNER */
+    .q-bar { background:var(--bg3); border-top:1px solid var(--bdr); padding:4px 12px; font-size:.71rem; color:var(--t2); display:flex; align-items:center; gap:8px; flex-shrink:0; }
+
+    /* CONTROLS */
+    .ctrl { background:var(--bg2); border-top:1px solid var(--bdr); padding:7px 12px; display:flex; align-items:center; gap:7px; flex-shrink:0; flex-wrap:wrap; }
+    .now { flex:1; min-width:0; }
+    .now-t { font-size:.83rem; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .now-m { font-size:.69rem; color:var(--t2); margin-top:2px; display:flex; gap:7px; flex-wrap:wrap; }
+    .nav-btn { background:var(--bg3); border:1px solid var(--bdr); color:var(--t1); padding:5px 9px; border-radius:6px; cursor:pointer; font-size:.77rem; font-family:inherit; transition:.12s; }
+    .nav-btn:hover { background:var(--bg4); }
+    .nav-btn.on { border-color:var(--ok); color:var(--ok); }
+    .nav-btn.acc { border-color:var(--acc); color:var(--acc); }
+
+    /* MODALS */
+    .ov { position:fixed; inset:0; background:rgba(0,0,0,.72); display:flex; align-items:center; justify-content:center; z-index:100; opacity:0; pointer-events:none; transition:opacity .15s; }
+    .ov.open { opacity:1; pointer-events:all; }
+    .modal { background:var(--bg2); border:1px solid var(--bdr); border-radius:12px; padding:18px; width:100%; max-width:520px; max-height:90vh; overflow-y:auto; }
+    .mh { display:flex; align-items:center; justify-content:space-between; margin-bottom:13px; }
+    .mh h2 { font-size:.96rem; }
+    .mf { display:flex; justify-content:flex-end; gap:7px; margin-top:13px; }
+    .fr { margin-bottom:10px; }
+    .fl { font-size:.75rem; color:var(--t2); margin-bottom:4px; display:block; }
+    .fi { width:100%; background:var(--bg3); border:1px solid var(--bdr); border-radius:6px; padding:7px 10px; color:var(--t1); font-size:.83rem; font-family:inherit; outline:none; transition:border-color .2s; }
+    .fi:focus { border-color:var(--acc); }
+    textarea.fi { resize:vertical; min-height:68px; }
+    .fhint { font-size:.7rem; color:var(--t2); margin-top:2px; }
+
+    /* TAG INPUT */
+    .tag-wrap { display:flex; flex-wrap:wrap; gap:3px; background:var(--bg3); border:1px solid var(--bdr); border-radius:6px; padding:4px 7px; cursor:text; min-height:36px; align-items:center; }
+    .tag-wrap:focus-within { border-color:var(--acc); }
+    .tag-wrap input { background:none; border:none; color:var(--t1); font-size:.81rem; font-family:inherit; outline:none; min-width:60px; flex:1; }
+    .ti { display:flex; align-items:center; gap:2px; background:var(--bg4); border:1px solid var(--bdr); border-radius:10px; padding:1px 6px; font-size:.7rem; }
+    .ti button { background:none; border:none; cursor:pointer; color:var(--t2); font-size:.72rem; line-height:1; }
+
+    /* RATING */
+    .rat { display:flex; gap:4px; }
+    .rat-s { font-size:1.2rem; cursor:pointer; color:var(--bdr); transition:color .1s; }
+    .rat-s.on,.rat-s:hover { color:#f5a623; }
+
+    /* BULK */
+    .b2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .bp { background:var(--bg3); border:1px solid var(--bdr); border-radius:8px; padding:8px 12px; text-align:center; margin:5px 0; }
+    .bp strong { color:var(--acc); font-size:1.5rem; display:block; line-height:1.1; }
+    .bp span { font-size:.75rem; color:var(--t2); }
+
+    /* SETTINGS */
+    .swatches { display:flex; gap:7px; flex-wrap:wrap; margin-bottom:14px; }
+    .sw-c { width:28px; height:28px; border-radius:50%; cursor:pointer; border:2px solid transparent; transition:.15s; flex-shrink:0; }
+    .sw-c:hover { transform:scale(1.1); }
+    .sw-c.on { border-color:var(--t1); transform:scale(1.15); }
+    .set-row { display:flex; align-items:center; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--bdr); gap:12px; }
+    .set-row:last-child { border:none; }
+    .set-label { font-size:.84rem; }
+    .set-hint { font-size:.71rem; color:var(--t2); margin-top:1px; }
+    .sw-t { position:relative; width:38px; height:20px; flex-shrink:0; }
+    .sw-t input { opacity:0; width:0; height:0; position:absolute; }
+    .sw-t .sl { position:absolute; inset:0; background:var(--bdr); border-radius:20px; cursor:pointer; transition:.2s; }
+    .sw-t .sl::before { content:''; position:absolute; width:14px; height:14px; left:3px; top:3px; background:#fff; border-radius:50%; transition:.2s; }
+    .sw-t input:checked + .sl { background:var(--acc); }
+    .sw-t input:checked + .sl::before { transform:translateX(18px); }
+
+    /* SHORTCUTS */
+    .sc-g { display:grid; grid-template-columns:auto 1fr; gap:4px 12px; align-items:center; }
+    .sk { background:var(--bg3); border:1px solid var(--bdr); border-radius:4px; padding:2px 6px; font-size:.72rem; font-family:monospace; white-space:nowrap; }
+    .sd { font-size:.79rem; color:var(--t2); }
+
+    /* CONTEXT MENU */
+    .ctx { position:fixed; background:var(--bg2); border:1px solid var(--bdr); border-radius:8px; box-shadow:0 8px 28px rgba(0,0,0,.55); z-index:200; min-width:175px; padding:4px; }
+    .ctx-item { padding:7px 12px; font-size:.8rem; cursor:pointer; border-radius:5px; display:flex; align-items:center; gap:8px; }
+    .ctx-item:hover { background:var(--bg4); }
+    .ctx-sep { height:1px; background:var(--bdr); margin:3px 0; }
+
+    /* CONFIRM */
+    .cb { padding:7px 0; font-size:.88rem; color:var(--t2); }
+
+    /* TOAST */
+    #tw { position:fixed; bottom:16px; right:16px; z-index:9999; display:flex; flex-direction:column; gap:5px; pointer-events:none; }
+    .toast { background:var(--bg3); border:1px solid var(--bdr); border-radius:8px; padding:7px 13px; font-size:.8rem; max-width:290px; opacity:1; transform:translateY(0); transition:opacity .3s,transform .3s; }
+    .toast.ok  { border-color:var(--ok); }
+    .toast.err { border-color:var(--danger); }
+    .toast.hide { opacity:0; transform:translateY(5px); }
+
+    body.light .ps { background:#111; }
+    @media (max-width:620px) { :root { --sw:250px; } .hr .btn span { display:none; } }
+  </style>
+</head>
+
+<body id="app" :class="{light:theme==='light'}">
+
+<!-- RESUME BANNER -->
+<div class="rbanner" v-if="resumeBanner">
+  <p>📂 Ditemukan di <strong>{{ fsaPendingName }}</strong> — muat dari file tersebut?</p>
+  <button class="btn ok" @click="doResume">Muat File</button>
+  <button class="ico" @click="resumeBanner=false">✕</button>
+</div>
+
+<!-- BATCH BAR -->
+<div class="batch-bar" v-if="selMode && selected.size">
+  <strong>{{ selected.size }} dipilih</strong>
+  <button class="btn" @click="batchAddQueue">＋ Queue</button>
+  <button class="btn" @click="ovBatchMove=true">📂 Pindah</button>
+  <button class="btn" @click="openBatchTag">🏷 Tag</button>
+  <button class="btn pd" @click="batchDelete">🗑 Hapus</button>
+  <button class="mini" style="margin-left:auto;" @click="clearSel">✕ Batal</button>
+</div>
+
+<!-- HEADER -->
+<header>
+  <button class="ico" @click="sidebarOff=!sidebarOff" title="Sidebar (\)">☰</button>
+  <div class="logo">Video<b>Pro</b><span class="ver">v5</span></div>
+  <div class="sw">
+    <span class="sw-ico">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+    </span>
+    <input v-model="search" :placeholder="globalSearch?'Cari semua playlist…':'Cari video…'" @keydown.escape="search='';globalSearch=false">
+    <span class="gsearch-badge" v-if="globalSearch" @click="globalSearch=false" title="Klik matikan global">🌐</span>
+  </div>
+  <div class="hr">
+    <button class="btn dash" @click="openBulk" title="Bulk Add (B)">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+        <circle cx="3" cy="6" r="1.5" fill="currentColor"/><circle cx="3" cy="12" r="1.5" fill="currentColor"/><circle cx="3" cy="18" r="1.5" fill="currentColor"/>
+      </svg><span>Bulk</span>
+    </button>
+    <button class="btn pa" @click="openAdd" title="Tambah (N)">＋ <span>Tambah</span></button>
+    <button class="ico" :class="{on:selMode}" @click="selMode=!selMode;clearSel()" title="Pilih banyak">☑</button>
+    <button class="ico" @click="globalSearch=!globalSearch" :class="{on:globalSearch}" title="Search global (/)">🌐</button>
+    <button class="ico" @click="ovSettings=true" title="Pengaturan">⚙</button>
+    <button class="ico" @click="ovHelp=true" title="Pintasan (?)">⌨</button>
+  </div>
+</header>
+
+<!-- MAIN -->
+<div class="main" @click="closeCtx">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar" :class="{off:sidebarOff}" :style="{width:sidebarW+'px','--sw':sidebarW+'px'}">
+
+    <!-- Playlist bar -->
+    <div class="pl-bar">
+      <div v-for="pl in playlists" :key="pl.id"
+           class="pl-chip" :class="{on:curPlId===pl.id}"
+           @click="switchPl(pl.id)"
+           @dblclick="renamePl(pl)"
+           :title="pl.name+' · Doubleklik untuk rename'">{{ pl.name }}</div>
+      <div class="pl-chip add" @click="addPlaylist" title="Playlist baru">＋</div>
+      <div class="pl-chip del" v-if="playlists.length>1" @click="askDelPl" title="Hapus playlist ini">🗑</div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <div class="tab" :class="{on:activeTab==='playlist'}" @click="activeTab='playlist'">
+        Playlist<span class="badge">{{ curPl.length }}</span>
+      </div>
+      <div class="tab" :class="{on:activeTab==='queue'}" @click="activeTab='queue'">
+        Q<span class="badge" v-if="queue.length">{{ queue.length }}</span>
+      </div>
+      <div class="tab" :class="{on:activeTab==='history'}" @click="activeTab='history'">Riwayat</div>
+      <div class="tab" :class="{on:activeTab==='stats'}" @click="activeTab='stats'">Stats</div>
+    </div>
+
+    <!-- PLAYLIST PANEL -->
+    <template v-if="activeTab==='playlist'">
+      <div class="tb">
+        <label>Sort:</label>
+        <select class="fsel" v-model="sortMode">
+          <option value="manual">Manual</option>
+          <option value="az">A→Z</option>
+          <option value="za">Z→A</option>
+          <option value="newest">Terbaru</option>
+          <option value="oldest">Terlama</option>
+          <option value="most">Sering Ditonton</option>
+          <option value="rating">Rating ★</option>
+          <option value="pinned">Pin Dulu</option>
+        </select>
+        <button class="mini" :class="{on:showFilter}" @click="showFilter=!showFilter" title="Filter tag">🏷</button>
+        <div class="view-btns">
+          <button class="vb" :class="{on:viewMode==='list'}" @click="viewMode='list'" title="List (G)">≡</button>
+          <button class="vb" :class="{on:viewMode==='grid'}" @click="viewMode='grid'" title="Grid (G)">▦</button>
+        </div>
+      </div>
+
+      <div class="tf" v-if="showFilter && allTags.length">
+        <div class="tg" :class="{on:filterTag===''}" @click="filterTag=''">Semua</div>
+        <div class="tg" v-for="t in allTags" :key="t" :class="{on:filterTag===t}" @click="filterTag=filterTag===t?'':t">{{ t }}</div>
+      </div>
+      <div class="cat-row" v-if="curCats.length">
+        <div class="chip" :class="{on:filterCat===''}" @click="filterCat=''">Semua</div>
+        <div class="chip" v-for="c in curCats" :key="c.id" :class="{on:filterCat===c.id}" @click="filterCat=filterCat===c.id?'':c.id">{{ c.name }}</div>
+      </div>
+
+      <!-- GLOBAL SEARCH -->
+      <template v-if="globalSearch && search">
+        <div class="vl">
+          <template v-for="pl in playlists" :key="pl.id">
+            <template v-if="globalResults(pl.id).length">
+              <div class="gs-pl-label">{{ pl.name }}</div>
+              <div v-for="v in globalResults(pl.id)" :key="v.id" class="vi" :class="{on:curId===v.id}" @click="curPlId=pl.id;play(v.id)" @contextmenu.prevent="openCtx(v,$event)">
+                <div class="vt-wrap"><img v-if="v.thumb" :src="v.thumb" class="vt" loading="lazy"><div v-else class="vt-ph">▶</div></div>
+                <div class="vi-info">
+                  <div class="vi-title" v-html="highlight(v.title)"></div>
+                  <div class="vi-meta"><span style="color:var(--acc)">{{ pl.name }}</span></div>
+                </div>
+              </div>
+            </template>
+          </template>
+          <div v-if="!playlists.some(p=>globalResults(p.id).length)" style="padding:20px;text-align:center;color:var(--t2);font-size:.82rem;">Tidak ada hasil ditemukan</div>
+        </div>
+      </template>
+
+      <!-- LIST VIEW -->
+      <div v-else-if="viewMode==='list'" class="vl" :class="{compact:settings.compact}" ref="vlRef">
+        <div v-if="!sortedPl.length" style="padding:24px;text-align:center;color:var(--t2);font-size:.83rem;">
+          <div style="font-size:2.5rem;margin-bottom:8px;">{{ search?'🔍':'📭' }}</div>
+          {{ search?'Tidak ada hasil pencarian':'Playlist kosong' }}
+          <div v-if="!search" style="margin-top:10px;"><button class="btn pa" @click="openAdd">Tambah Video</button></div>
+        </div>
+        <div v-for="v in sortedPl" :key="v.id"
+             class="vi" :class="{on:curId===v.id,'pinned-item':v.pinned,'watched-dim':v.watched&&settings.dimWatched,dragging:drag.src===v.id,over:drag.over===v.id}"
+             @click="onVIClick(v,$event)"
+             @contextmenu.prevent="openCtx(v,$event)"
+             draggable="true"
+             @dragstart="drag.src=v.id"
+             @dragover.prevent="drag.over=v.id"
+             @dragleave="drag.over=''"
+             @drop="doDrop(v.id)"
+             @dragend="drag={src:'',over:''}">
+          <input v-if="selMode" type="checkbox" class="vi-sel" :checked="selected.has(v.id)" @click.stop="toggleSel(v.id)">
+          <span class="vi-pin" v-if="v.pinned">📌</span>
+          <span class="vi-watched-badge" v-if="v.watched">✓</span>
+          <span class="q-num" v-if="queueIdx(v.id)>0">{{ queueIdx(v.id) }}</span>
+          <div class="vt-wrap">
+            <img v-if="v.thumb" :src="v.thumb" class="vt" loading="lazy">
+            <div v-else class="vt-ph">▶</div>
+            <div class="vt-prog" v-if="v.progress>0"><div class="vt-prog-fill" :style="{width:v.progress+'%'}"></div></div>
+          </div>
+          <div class="vi-info">
+            <div class="vi-title" v-html="highlight(v.title)"></div>
+            <div class="vi-meta">
+              <span v-if="v.cat">{{ catName(v.cat) }}</span>
+              <span v-if="v.wc">👁 {{ v.wc }}</span>
+              <span class="stars" @click.stop="quickRate(v.id)">{{ starStr(v.rating) }}</span>
+              <span v-if="v.dur" style="font-size:.65rem;">⏱ {{ v.dur }}</span>
+              <span v-if="v.notes" title="Ada catatan">📝</span>
+            </div>
+            <div class="vi-tags" v-if="v.tags&&v.tags.length">
+              <span class="vt-chip" v-for="t in v.tags" :key="t" @click.stop="filterTag=t">{{ t }}</span>
+            </div>
+          </div>
+          <div class="vi-act">
+            <button class="mini" @click.stop="addToQueue(v.id)">＋Q</button>
+            <button class="mini" @click.stop="openEdit(v.id)">✎</button>
+            <button class="mini" @click.stop="askDel(v.id)">🗑</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- GRID VIEW -->
+      <div v-else class="vl grid-view" ref="vlRef">
+        <div v-if="!sortedPl.length" style="grid-column:1/-1;padding:24px;text-align:center;color:var(--t2);font-size:.83rem;">
+          <div style="font-size:2.5rem;margin-bottom:8px;">📭</div>Playlist kosong
+        </div>
+        <div v-for="v in sortedPl" :key="v.id"
+             class="vi-card" :class="{on:curId===v.id}"
+             @click="play(v.id)"
+             @contextmenu.prevent="openCtx(v,$event)">
+          <div class="vi-card-thumb">
+            <img v-if="v.thumb" :src="v.thumb" loading="lazy">
+            <div v-else class="vi-card-ph">▶</div>
+            <div class="vi-play-ov">▶</div>
+            <div style="position:absolute;top:4px;right:4px;font-size:.68rem;" v-if="v.pinned">📌</div>
+            <div style="position:absolute;top:4px;left:4px;font-size:.62rem;background:var(--ok);color:#fff;border-radius:3px;padding:1px 3px;" v-if="v.watched">✓</div>
+          </div>
+          <div class="vi-card-prog"><div class="vi-card-prog-fill" :style="{width:(v.progress||0)+'%'}"></div></div>
+          <div class="vi-card-body">
+            <div class="vi-card-title" v-html="highlight(v.title)"></div>
+            <div class="vi-card-meta">
+              <span v-if="v.wc">👁{{ v.wc }}</span>
+              <span v-if="v.rating" style="color:#f5a623;">{{ '★'.repeat(v.rating) }}</span>
+              <span v-if="v.dur">{{ v.dur }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- QUEUE PANEL -->
+    <template v-if="activeTab==='queue'">
+      <div class="pn-hd">Queue ({{ queue.length }}) <button class="mini" @click="queue=[]">Kosongkan</button></div>
+      <div class="vl">
+        <div v-if="!queue.length" style="padding:24px;text-align:center;color:var(--t2);font-size:.82rem;line-height:1.8;">
+          <div style="font-size:2rem;margin-bottom:8px;">🎵</div>Queue kosong<br>
+          <small>Klik kanan video → Tambah ke Queue</small>
+        </div>
+        <div v-for="(vid,i) in queueVideos" :key="vid.id" class="vi">
+          <div class="vt-ph" style="font-size:.7rem;font-weight:700;color:var(--acc);">{{ i+1 }}</div>
+          <div class="vi-info"><div class="vi-title">{{ vid.title }}</div><div class="vi-meta"><span>{{ catName(vid.cat) }}</span></div></div>
+          <div class="vi-act" style="opacity:1;">
+            <button class="mini" @click.stop="playFromQueue(i)">▶</button>
+            <button class="mini" @click.stop="queue.splice(i,1)">✕</button>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- HISTORY PANEL -->
+    <template v-if="activeTab==='history'">
+      <div class="pn-hd">Riwayat ({{ hist.length }}) <button class="mini" @click="hist=[]">Bersihkan</button></div>
+      <div class="vl">
+        <div v-for="h in histDisplay" :key="h.id+h.at" class="vi" @click="jumpToVideo(h.id)">
+          <div class="vt-ph" style="font-size:.8rem;">⏱</div>
+          <div class="vi-info">
+            <div class="vi-title">{{ h.title }}</div>
+            <div class="vi-meta"><span>{{ fmtD(h.at) }}</span><span v-if="h.plName" style="color:var(--acc);margin-left:3px;">{{ h.plName }}</span></div>
+          </div>
+        </div>
+        <div v-if="!hist.length" style="padding:24px;text-align:center;color:var(--t2);font-size:.82rem;"><div style="font-size:2rem;margin-bottom:8px;">⏱</div>Belum ada riwayat</div>
+      </div>
+    </template>
+
+    <!-- STATS PANEL -->
+    <template v-if="activeTab==='stats'">
+      <div class="vl">
+        <div class="sg">
+          <div class="sc"><div class="sc-n">{{ allVideos.length }}</div><div class="sc-l">Total Video</div></div>
+          <div class="sc"><div class="sc-n">{{ playlists.length }}</div><div class="sc-l">Playlist</div></div>
+          <div class="sc"><div class="sc-n">{{ totalWatched }}</div><div class="sc-l">Total Ditonton</div></div>
+          <div class="sc"><div class="sc-n">{{ watchedCount }}</div><div class="sc-l">Sudah Ditonton</div></div>
+          <div class="sc"><div class="sc-n">{{ allTagsGlobal.length }}</div><div class="sc-l">Unik Tags</div></div>
+          <div class="sc"><div class="sc-n">{{ avgRating }}</div><div class="sc-l">Avg Rating</div></div>
+        </div>
+
+        <div class="tl">
+          <h3>📊 Progress per Playlist</h3>
+          <div v-for="pl in playlists" :key="pl.id" style="margin-bottom:7px;">
+            <div class="bar-row">
+              <span class="bar-label">{{ pl.name }}</span>
+              <div class="bar-track"><div class="bar-fill" :style="{width:plWatchedPct(pl.id)+'%'}"></div></div>
+              <span class="bar-val">{{ plWatchedPct(pl.id) }}%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="tl">
+          <h3>🔥 Paling Sering Ditonton</h3>
+          <div v-for="(v,i) in topWatched" :key="v.id" class="ti2" @click="jumpToVideo(v.id)">
+            <span class="tr">{{ i+1 }}</span>
+            <div class="bar-track" style="width:50px;flex:none;"><div class="bar-fill" :style="{width:topWatched[0]?(v.wc/topWatched[0].wc*100)+'%':'0%'}"></div></div>
+            <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-left:4px;">{{ v.title }}</span>
+            <span style="color:var(--t2);font-size:.68rem;flex-shrink:0;">👁{{ v.wc }}</span>
+          </div>
+          <div v-if="!topWatched.length" style="color:var(--t2);font-size:.78rem;padding:6px 0;">Belum ada data tontonan</div>
+        </div>
+
+        <div class="tl">
+          <h3>⭐ Rating Tertinggi</h3>
+          <div v-for="(v,i) in topRated" :key="v.id" class="ti2" @click="jumpToVideo(v.id)">
+            <span class="tr">{{ i+1 }}</span>
+            <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ v.title }}</span>
+            <span style="color:#f5a623;font-size:.75rem;flex-shrink:0;">{{ '★'.repeat(v.rating) }}</span>
+          </div>
+          <div v-if="!topRated.length" style="color:var(--t2);font-size:.78rem;padding:6px 0;">Belum ada rating</div>
+        </div>
+
+        <div class="tl">
+          <h3>🏷 Tag Terpopuler</h3>
+          <div v-for="t in topTags" :key="t.tag" class="bar-row">
+            <span class="bar-label">{{ t.tag }}</span>
+            <div class="bar-track"><div class="bar-fill" :style="{width:topTags[0]?(t.count/topTags[0].count*100)+'%':'0%'}"></div></div>
+            <span class="bar-val">{{ t.count }}</span>
+          </div>
+          <div v-if="!topTags.length" style="color:var(--t2);font-size:.78rem;padding:6px 0;">Belum ada tag</div>
+        </div>
+      </div>
+    </template>
+
+    <!-- SIDEBAR FOOTER -->
+    <div class="sf">
+      <div class="sf-main">
+        <button class="btn" style="flex:1;justify-content:center;font-size:.75rem;padding:5px 4px;" @click="trigImport">⬆ Import</button>
+        <button class="btn" style="flex:1;justify-content:center;font-size:.75rem;padding:5px 4px;" @click="doExport">⬇ Export</button>
+        <button class="btn" style="flex:1;justify-content:center;font-size:.75rem;padding:5px 4px;" @click="manageCats">🗂 Kat.</button>
+        <button class="btn pd" @click="askClearAll" title="Hapus semua">🗑</button>
+      </div>
+      <div class="sf-file" v-if="fsaSupported">
+        <div style="display:flex;gap:4px;">
+          <button class="btn" style="flex:1;justify-content:center;font-size:.72rem;padding:4px;" @click="doOpenFile">📂 Buka</button>
+          <button class="btn" style="flex:1;justify-content:center;font-size:.72rem;padding:4px;" @click="doNewFile">🆕 Buat</button>
+        </div>
+        <div class="file-ind" v-if="fsaHandle"><span>●</span><span class="fn">{{ fsaHandle.name }}</span><button class="mini" @click="doUnlinkFile">✕</button></div>
+      </div>
+    </div>
+  </div><!-- /sidebar -->
+
+  <div class="rsz" :class="{active:resizing}" @mousedown.prevent="startResize"></div>
+
+  <!-- PLAYER COL -->
+  <div class="pcol">
+    <div class="ps" ref="psRef">
+      <div class="ph" v-if="!curId">
+        <div class="ph-ico">▶</div>
+        <div>Pilih video dari playlist</div>
+        <button class="btn pa" @click="openAdd" style="margin-top:6px;">Tambah Video Pertama</button>
+      </div>
+      <iframe v-if="curUrl" :src="curUrl" allowfullscreen allow="autoplay; encrypted-media; fullscreen" :key="curUrl"></iframe>
+
+      <!-- Autoplay countdown -->
+      <div class="ap-ov" v-if="autoplay.active">
+        <div class="ap-txt">
+          <strong>{{ autoplay.nextTitle }}</strong>
+          <span>Berikutnya dalam {{ autoplay.secs }} detik…</span>
+          <div class="ap-bar"><div class="ap-bar-fill" :style="{width:((5-autoplay.secs)/5*100)+'%'}"></div></div>
+        </div>
+        <button class="btn" @click="cancelAutoplay" style="flex-shrink:0;">Batalkan</button>
+        <button class="btn pa" @click="doAutoplayNow" style="flex-shrink:0;">Putar ▶</button>
+      </div>
+    </div>
+
+    <div class="q-bar" v-if="queue.length">
+      🎵 Berikutnya: <strong style="color:var(--t1);">{{ queueVideos[0]?.title }}</strong>
+      <span v-if="queue.length>1">+{{ queue.length-1 }} lagi</span>
+      <button class="mini" @click="activeTab='queue'">Lihat</button>
+      <button class="mini" @click="playFromQueue(0)" style="margin-left:auto;">▶ Putar</button>
+    </div>
+
+    <div class="ctrl">
+      <div class="now">
+        <div class="now-t">{{ curVideo?.title||'Tidak ada video aktif' }}</div>
+        <div class="now-m" v-if="curVideo">
+          <span v-if="curVideo.cat">{{ catName(curVideo.cat) }}</span>
+          <span class="stars">{{ starStr(curVideo.rating) }}</span>
+          <span>👁 {{ curVideo.wc||0 }}</span>
+          <span v-if="curVideo.dur">⏱ {{ curVideo.dur }}</span>
+          <span v-if="curVideo.tags?.length">🏷 {{ curVideo.tags.slice(0,3).join(', ') }}</span>
+        </div>
+      </div>
+      <button class="nav-btn" @click="go(-1)" title="Sebelumnya (←)">&#9664;</button>
+      <button class="nav-btn" @click="go(1)"  title="Berikutnya (→)">&#9654;</button>
+      <button class="nav-btn" :class="{on:shuffle}"  @click="shuffle=!shuffle"  title="Shuffle (S)">⇄</button>
+      <button class="nav-btn" :class="{on:loop}"     @click="loop=!loop"        title="Loop (L)">↻</button>
+      <button class="nav-btn" :class="{acc:settings.autoplayNext}" @click="settings.autoplayNext=!settings.autoplayNext" title="Auto-play next (A)">▶▶</button>
+      <button class="nav-btn" :class="{on:curVideo?.watched}" @click="markWatched" title="Tandai ditonton (W)">✓</button>
+      <button class="nav-btn" @click="copyUrl" title="Copy URL">⎘</button>
+      <button class="nav-btn" @click="toggleFS" title="Fullscreen (F)">⛶</button>
+    </div>
+  </div>
+</div><!-- /main -->
+
+<!-- TOAST -->
+<div id="tw"><div v-for="t in toasts" :key="t.id" class="toast" :class="[t.type,{hide:t.hide}]">{{ t.msg }}</div></div>
+
+<!-- CONTEXT MENU -->
+<div class="ctx" v-if="ctx.show" :style="{top:ctx.y+'px',left:ctx.x+'px'}" @click.stop>
+  <div class="ctx-item" @click="play(ctx.v.id);closeCtx()">▶ Putar Sekarang</div>
+  <div class="ctx-item" @click="addToQueue(ctx.v.id);closeCtx()">＋ Tambah ke Queue</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" @click="togglePin(ctx.v.id);closeCtx()">{{ ctx.v.pinned?'📌 Unpin':'📌 Pin ke Atas' }}</div>
+  <div class="ctx-item" @click="toggleWatched(ctx.v.id);closeCtx()">{{ ctx.v.watched?'○ Tandai Belum Ditonton':'✓ Tandai Sudah Ditonton' }}</div>
+  <div class="ctx-item" @click="duplicateVideo(ctx.v.id);closeCtx()">⎘ Duplikat Video</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" @click="openEdit(ctx.v.id);closeCtx()">✎ Edit</div>
+  <div class="ctx-item" @click="copyVideoUrl(ctx.v.url);closeCtx()">📋 Salin URL</div>
+  <div class="ctx-item" style="color:var(--danger);" @click="askDel(ctx.v.id);closeCtx()">🗑 Hapus</div>
+</div>
+
+<!-- MODAL: VIDEO -->
+<div class="ov" :class="{open:ovVideo}" @click.self="ovVideo=false">
+  <div class="modal">
+    <div class="mh"><h2>{{ editId?'✎ Edit Video':'＋ Tambah Video' }}</h2><button class="ico" @click="ovVideo=false">✕</button></div>
+    <div class="fr"><label class="fl">Judul *</label><input class="fi" v-model="form.title" placeholder="Judul video…" ref="titleRef"></div>
+    <div class="fr">
+      <label class="fl">Embed / URL *</label>
+      <textarea class="fi" v-model="form.embed" placeholder="Paste iframe atau URL https://…" style="min-height:72px;"></textarea>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="fr"><label class="fl">Playlist</label>
+        <select class="fi" v-model="form.plId"><option v-for="pl in playlists" :key="pl.id" :value="pl.id">{{ pl.name }}</option></select>
+      </div>
+      <div class="fr"><label class="fl">Kategori</label>
+        <select class="fi" v-model="form.cat"><option value="">— Tanpa —</option><option v-for="c in formCats" :key="c.id" :value="c.id">{{ c.name }}</option></select>
+      </div>
+    </div>
+    <div class="fr">
+      <label class="fl">Tags (Enter untuk tambah)</label>
+      <div class="tag-wrap" @click="$refs.tagIn?.focus()">
+        <span class="ti" v-for="(t,i) in form.tags" :key="t">{{ t }}<button @click.stop="form.tags.splice(i,1)">×</button></span>
+        <input ref="tagIn" v-model="tagInput" @keydown.enter.prevent="addTag" @keydown.backspace="backspaceTag" placeholder="tag…">
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="fr"><label class="fl">Durasi (mis. 1:30:00)</label><input class="fi" v-model="form.dur" placeholder="hh:mm:ss atau mm:ss"></div>
+      <div class="fr"><label class="fl">Rating</label>
+        <div class="rat" style="margin-top:4px;"><span v-for="n in 5" :key="n" class="rat-s" :class="{on:n<=form.rating}" @click="form.rating=form.rating===n?0:n">★</span></div>
+      </div>
+    </div>
+    <div class="fr"><label class="fl">Thumbnail URL (opsional)</label><input class="fi" v-model="form.thumb" placeholder="https://…/cover.jpg"></div>
+    <div class="fr"><label class="fl">Catatan (opsional)</label><textarea class="fi" v-model="form.notes" placeholder="Catatan tambahan…" style="min-height:50px;"></textarea></div>
+    <div class="mf"><button class="btn" @click="ovVideo=false">Batal</button><button class="btn pa" @click="saveVideo">Simpan</button></div>
+  </div>
+</div>
+
+<!-- MODAL: BULK ADD -->
+<div class="ov" :class="{open:ovBulk}" @click.self="ovBulk=false">
+  <div class="modal" style="max-width:560px;">
+    <div class="mh"><h2>📋 Tambah Massal</h2><button class="ico" @click="ovBulk=false">✕</button></div>
+    <div class="fr">
+      <label class="fl">URL / Iframe (satu per baris) *</label>
+      <textarea class="fi" v-model="bulk.input" style="min-height:120px;" @input="bulk.count=detectUrls(bulk.input).length"
+        placeholder="Paste URL atau kode iframe…&#10;https://vidara.to/e/abc&#10;https://vidara.to/e/def"></textarea>
+    </div>
+    <div class="bp"><strong>{{ bulk.count }}</strong><span>URL valid terdeteksi</span></div>
+    <div class="b2">
+      <div class="fr" style="margin:0;"><label class="fl">Prefix Nama</label><input class="fi" v-model="bulk.prefix" placeholder="Video"></div>
+      <div class="fr" style="margin:0;"><label class="fl">Mulai dari No.</label><input class="fi" type="number" v-model.number="bulk.start" min="0"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">
+      <div class="fr" style="margin:0;"><label class="fl">Playlist</label>
+        <select class="fi" v-model="bulk.plId"><option v-for="pl in playlists" :key="pl.id" :value="pl.id">{{ pl.name }}</option></select>
+      </div>
+      <div class="fr" style="margin:0;"><label class="fl">Kategori</label>
+        <select class="fi" v-model="bulk.cat"><option value="">— Tanpa —</option><option v-for="c in bulkCats" :key="c.id" :value="c.id">{{ c.name }}</option></select>
+      </div>
+    </div>
+    <div class="fhint" style="margin-top:8px;">Preview nama: "{{ bulk.prefix||'Video' }} {{ bulk.start||1 }}", "{{ bulk.prefix||'Video' }} {{ (bulk.start||1)+1 }}"…</div>
+    <div class="mf"><button class="btn" @click="ovBulk=false">Batal</button><button class="btn pa" @click="doBulkAdd">Tambah Semua</button></div>
+  </div>
+</div>
+
+<!-- MODAL: KATEGORI -->
+<div class="ov" :class="{open:ovCat}" @click.self="ovCat=false">
+  <div class="modal">
+    <div class="mh"><h2>🗂 Kelola Kategori</h2><button class="ico" @click="ovCat=false">✕</button></div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <input class="fi" style="flex:1;" v-model="newCatName" placeholder="Nama kategori baru…" @keydown.enter="addCat" ref="catIn">
+      <button class="btn pa" @click="addCat">Tambah</button>
+    </div>
+    <div v-for="pl in playlists" :key="pl.id" style="margin-bottom:12px;">
+      <div style="font-size:.72rem;color:var(--acc);margin-bottom:5px;font-weight:700;">{{ pl.name }}</div>
+      <div v-if="!pl.cats.length" style="font-size:.78rem;color:var(--t2);padding:3px 0;">Belum ada kategori</div>
+      <div v-for="c in pl.cats" :key="c.id" style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--bdr);">
+        <span style="flex:1;font-size:.84rem;">{{ c.name }}</span>
+        <span style="font-size:.71rem;color:var(--t2);">{{ pl.videos.filter(v=>v.cat===c.id).length }} video</span>
+        <button class="mini pd" @click="removeCat(pl.id,c.id)">Hapus</button>
+      </div>
+    </div>
+    <div class="mf"><button class="btn pa" @click="ovCat=false">Selesai</button></div>
+  </div>
+</div>
+
+<!-- MODAL: BATCH MOVE -->
+<div class="ov" :class="{open:ovBatchMove}" @click.self="ovBatchMove=false">
+  <div class="modal" style="max-width:360px;">
+    <div class="mh"><h2>📂 Pindah ke Playlist</h2><button class="ico" @click="ovBatchMove=false">✕</button></div>
+    <div class="fr"><label class="fl">Pilih Playlist Tujuan</label>
+      <select class="fi" v-model="batchTarget">
+        <option value="">— Pilih —</option>
+        <option v-for="pl in playlists" :key="pl.id" :value="pl.id" :disabled="pl.id===curPlId">{{ pl.name }}</option>
+      </select>
+    </div>
+    <div class="mf"><button class="btn" @click="ovBatchMove=false">Batal</button><button class="btn pa" @click="doBatchMove">Pindah {{ selected.size }} Video</button></div>
+  </div>
+</div>
+
+<!-- MODAL: BATCH TAG -->
+<div class="ov" :class="{open:ovBatchTag}" @click.self="ovBatchTag=false">
+  <div class="modal" style="max-width:360px;">
+    <div class="mh"><h2>🏷 Tambah Tag Massal</h2><button class="ico" @click="ovBatchTag=false">✕</button></div>
+    <div class="fr"><label class="fl">Tags (Enter untuk tambah)</label>
+      <div class="tag-wrap" @click="$refs.btagIn?.focus()">
+        <span class="ti" v-for="(t,i) in batchTags" :key="t">{{ t }}<button @click.stop="batchTags.splice(i,1)">×</button></span>
+        <input ref="btagIn" v-model="btagInput" @keydown.enter.prevent="addBTag" @keydown.backspace="if(!btagInput)batchTags.pop()" placeholder="tag…">
+      </div>
+    </div>
+    <div class="mf"><button class="btn" @click="ovBatchTag=false">Batal</button><button class="btn pa" @click="doBatchTag">Tambah ke {{ selected.size }} Video</button></div>
+  </div>
+</div>
+
+<!-- MODAL: CONFIRM -->
+<div class="ov" :class="{open:ovConfirm}" @click.self="ovConfirm=false">
+  <div class="modal" style="max-width:380px;">
+    <div class="mh"><h2>{{ confirm.title }}</h2></div>
+    <div class="cb">{{ confirm.msg }}</div>
+    <div class="mf"><button class="btn" @click="ovConfirm=false">Batal</button><button class="btn pd" @click="doConfirm">Ya, Lanjutkan</button></div>
+  </div>
+</div>
+
+<!-- MODAL: RENAME PLAYLIST -->
+<div class="ov" :class="{open:ovRename}" @click.self="ovRename=false">
+  <div class="modal" style="max-width:360px;">
+    <div class="mh"><h2>Rename Playlist</h2><button class="ico" @click="ovRename=false">✕</button></div>
+    <div class="fr"><label class="fl">Nama Baru</label><input class="fi" v-model="renameVal" @keydown.enter="doRename" ref="renameRef"></div>
+    <div class="mf"><button class="btn" @click="ovRename=false">Batal</button><button class="btn pa" @click="doRename">Simpan</button></div>
+  </div>
+</div>
+
+<!-- MODAL: SETTINGS -->
+<div class="ov" :class="{open:ovSettings}" @click.self="ovSettings=false">
+  <div class="modal" style="max-width:420px;">
+    <div class="mh"><h2>⚙ Pengaturan</h2><button class="ico" @click="ovSettings=false">✕</button></div>
+
+    <div style="font-size:.78rem;font-weight:600;color:var(--t2);margin-bottom:7px;">Warna Aksen</div>
+    <div class="swatches">
+      <div v-for="c in accentColors" :key="c.val" class="sw-c" :class="{on:settings.accent===c.val}" :style="{background:c.val}" :title="c.name" @click="applyAccent(c.val)"></div>
+    </div>
+
+    <div class="set-row">
+      <div><div class="set-label">Tema Tampilan</div></div>
+      <div style="display:flex;gap:7px;">
+        <button class="btn" :class="{pa:theme==='dark'}" @click="theme='dark'">🌙 Dark</button>
+        <button class="btn" :class="{pa:theme==='light'}" @click="theme='light'">☀️ Light</button>
+      </div>
+    </div>
+    <div class="set-row">
+      <div><div class="set-label">Auto-play Next</div><div class="set-hint">Putar video berikutnya otomatis</div></div>
+      <label class="sw-t"><input type="checkbox" v-model="settings.autoplayNext"><span class="sl"></span></label>
+    </div>
+    <div class="set-row">
+      <div><div class="set-label">Compact List</div><div class="set-hint">Tampilan lebih rapat di sidebar</div></div>
+      <label class="sw-t"><input type="checkbox" v-model="settings.compact"><span class="sl"></span></label>
+    </div>
+    <div class="set-row">
+      <div><div class="set-label">Redup Video Sudah Ditonton</div><div class="set-hint">Item ✓ tampak lebih redup</div></div>
+      <label class="sw-t"><input type="checkbox" v-model="settings.dimWatched"><span class="sl"></span></label>
+    </div>
+    <div class="set-row">
+      <div><div class="set-label">Global Search Default</div><div class="set-hint">Search selalu cari semua playlist</div></div>
+      <label class="sw-t"><input type="checkbox" v-model="settings.globalSearchDefault"><span class="sl"></span></label>
+    </div>
+
+    <div class="mf"><button class="btn pa" @click="ovSettings=false">Tutup</button></div>
+  </div>
+</div>
+
+<!-- MODAL: SHORTCUTS -->
+<div class="ov" :class="{open:ovHelp}" @click.self="ovHelp=false">
+  <div class="modal" style="max-width:400px;">
+    <div class="mh"><h2>⌨ Pintasan Keyboard</h2><button class="ico" @click="ovHelp=false">✕</button></div>
+    <div class="sc-g">
+      <span class="sk">←</span><span class="sd">Video sebelumnya</span>
+      <span class="sk">→</span><span class="sd">Video berikutnya</span>
+      <span class="sk">F</span><span class="sd">Fullscreen</span>
+      <span class="sk">L</span><span class="sd">Toggle Loop</span>
+      <span class="sk">S</span><span class="sd">Toggle Shuffle</span>
+      <span class="sk">A</span><span class="sd">Toggle Auto-play Next</span>
+      <span class="sk">W</span><span class="sd">Tandai Sudah / Belum Ditonton</span>
+      <span class="sk">G</span><span class="sd">Toggle Grid / List View</span>
+      <span class="sk">N</span><span class="sd">Tambah Video Baru</span>
+      <span class="sk">B</span><span class="sd">Bulk Add</span>
+      <span class="sk">Q</span><span class="sd">Tab Queue</span>
+      <span class="sk">/</span><span class="sd">Toggle Global Search</span>
+      <span class="sk">?</span><span class="sd">Bantuan ini</span>
+      <span class="sk">\</span><span class="sd">Toggle Sidebar</span>
+      <span class="sk">Esc</span><span class="sd">Tutup modal / Batalkan</span>
+    </div>
+    <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--bdr);font-size:.75rem;color:var(--t2);">
+      💡 Klik kanan video untuk menu konteks &middot; Doubleklik nama playlist untuk rename &middot; Seret video untuk reorder
+    </div>
+    <div class="mf"><button class="btn pa" @click="ovHelp=false">Tutup</button></div>
+  </div>
+</div>
+
+<input type="file" id="fileIn" accept=".json" style="display:none">
+
+<script>
+const { createApp, ref, reactive, computed, watch, nextTick, onMounted } = Vue;
+
+const uid  = () => Math.random().toString(36).slice(2,9);
+const fmtD = d => { if(!d) return ''; const dt=new Date(d); return isNaN(dt)?d:dt.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'}); };
+
+function parseEmbed(raw) {
+  if(!raw) return null;
+  const s=raw.trim();
+  const m=s.match(/src=["']([^"']+)["']/);
+  if(m){ try{ const u=new URL(m[1]); if(u.protocol==='https:') return u.href; }catch{} }
+  try{ const u=new URL(s); if(u.protocol==='https:') return u.href; }catch{}
+  return null;
+}
+
+/* IDB */
+const IDB=(()=>{
+  let _db=null;
+  const open=()=>new Promise((res,rej)=>{
+    if(_db){res(_db);return;}
+    const r=indexedDB.open('vp5',1);
+    r.onupgradeneeded=e=>e.target.result.createObjectStore('kv');
+    r.onsuccess=e=>{_db=e.target.result;res(_db);};
+    r.onerror=e=>rej(e.target.error);
+  });
+  const run=async(mode,key,val)=>{
+    const db=await open();
+    return new Promise(res=>{
+      const s=db.transaction('kv',mode).objectStore('kv');
+      (mode==='readwrite'?(val===undefined?s.delete(key):s.put(val,key)):s.get(key)).onsuccess=e=>res(e.target.result);
+    });
+  };
+  return{get:k=>run('readonly',k),set:(k,v)=>run('readwrite',k,v),del:k=>run('readwrite',k)};
+})();
+
+/* FSA */
+const FSA={
+  handle:null,pending:null,pendingName:'',
+  supported:typeof window!=='undefined'&&'showOpenFilePicker' in window,
+  async write(data){
+    if(!this.handle) return false;
+    try{const w=await this.handle.createWritable();await w.write(JSON.stringify(data,null,2));await w.close();return true;}
+    catch{this.handle=null;IDB.del('fh5');return false;}
+  },
+  async openExisting(){
+    try{const[h]=await window.showOpenFilePicker({types:[{description:'VideoPro Data',accept:{'application/json':['.json']}}]});this.handle=h;await IDB.set('fh5',h);return JSON.parse(await(await h.getFile()).text());}catch{return null;}
+  },
+  async createNew(data){
+    try{const h=await window.showSaveFilePicker({suggestedName:'videopro-data.json',types:[{description:'VideoPro Data',accept:{'application/json':['.json']}}]});this.handle=h;await IDB.set('fh5',h);await this.write(data);return true;}catch{return false;}
+  },
+  async tryRestore(){
+    try{const h=await IDB.get('fh5');if(!h)return false;const perm=await h.queryPermission({mode:'readwrite'});if(perm==='granted'){this.handle=h;return JSON.parse(await(await h.getFile()).text());}if(perm==='prompt'){this.pending=h;this.pendingName=h.name;return 'pending';}}catch{}return false;
+  },
+  async resumePending(){
+    if(!this.pending)return null;
+    try{const perm=await this.pending.requestPermission({mode:'readwrite'});if(perm==='granted'){this.handle=this.pending;this.pending=null;return JSON.parse(await(await this.handle.getFile()).text());}}catch{}return null;
+  },
+  async unlink(){this.handle=null;this.pending=null;this.pendingName='';await IDB.del('fh5');}
+};
+
+const defaultPl=()=>({id:uid(),name:'Playlist 1',cats:[],videos:[]});
+const ACCENT_COLORS=[
+  {name:'Orange',val:'#ff6b35'},{name:'Blue',val:'#3b82f6'},
+  {name:'Purple',val:'#8b5cf6'},{name:'Green',val:'#10b981'},
+  {name:'Pink',val:'#ec4899'},{name:'Yellow',val:'#f59e0b'},
+  {name:'Red',val:'#ef4444'},{name:'Teal',val:'#14b8a6'},
+];
+
+createApp({
+  setup(){
+    /* STATE */
+    const playlists  = ref([defaultPl()]);
+    const curPlId    = ref('');
+    const hist       = ref([]);
+    const queue      = ref([]);
+    const theme      = ref('dark');
+    const sortMode   = ref('manual');
+    const search     = ref('');
+    const filterCat  = ref('');
+    const filterTag  = ref('');
+    const showFilter = ref(false);
+    const activeTab  = ref('playlist');
+    const sidebarOff = ref(false);
+    const sidebarW   = ref(300);
+    const resizing   = ref(false);
+    const drag       = reactive({src:'',over:''});
+    const shuffle    = ref(false);
+    const loop       = ref(false);
+    const curId      = ref('');
+    const viewMode   = ref('list');
+    const globalSearch = ref(false);
+    const resumeBanner = ref(false);
+    const toasts     = ref([]);
+    const selMode    = ref(false);
+    const selected   = ref(new Set());
+    const batchTarget = ref('');
+    const batchTags  = ref([]);
+    const btagInput  = ref('');
+    const accentColors = ACCENT_COLORS;
+
+    const settings = reactive({
+      autoplayNext:false, compact:false, dimWatched:false,
+      globalSearchDefault:false, accent:'#ff6b35'
+    });
+
+    const autoplay = reactive({active:false,secs:5,nextId:'',nextTitle:'',timer:null});
+    const ctx      = reactive({show:false,x:0,y:0,v:null});
+
+    const ovVideo     = ref(false);
+    const ovBulk      = ref(false);
+    const ovCat       = ref(false);
+    const ovConfirm   = ref(false);
+    const ovRename    = ref(false);
+    const ovSettings  = ref(false);
+    const ovHelp      = ref(false);
+    const ovBatchMove = ref(false);
+    const ovBatchTag  = ref(false);
+    const editId      = ref('');
+
+    const emptyForm=()=>({title:'',embed:'',plId:'',cat:'',tags:[],rating:0,thumb:'',notes:'',dur:''});
+    const form = reactive(emptyForm());
+    const tagInput = ref('');
+    const bulk = reactive({input:'',count:0,prefix:'Video',start:1,plId:'',cat:''});
+    const newCatName = ref('');
+    const confirm  = reactive({title:'',msg:'',cb:null});
+    const renameVal  = ref('');
+    const renamePlId = ref('');
+
+    const titleRef = ref(null);
+    const tagIn    = ref(null);
+    const catIn    = ref(null);
+    const renameRef = ref(null);
+    const vlRef    = ref(null);
+    const psRef    = ref(null);
+
+    const fsaSupported  = FSA.supported;
+    const fsaHandle     = ref(null);
+    const fsaPendingName = computed(()=>FSA.pendingName);
+
+    /* COMPUTED */
+    const curPl  = computed(()=>playlists.value.find(p=>p.id===curPlId.value)?.videos||[]);
+    const curPlaylist = computed(()=>playlists.value.find(p=>p.id===curPlId.value));
+    const curCats = computed(()=>curPlaylist.value?.cats||[]);
+    const formCats = computed(()=>playlists.value.find(p=>p.id===form.plId)?.cats||[]);
+    const bulkCats = computed(()=>playlists.value.find(p=>p.id===bulk.plId)?.cats||[]);
+    const allVideos = computed(()=>playlists.value.flatMap(p=>p.videos.map(v=>({...v,plId:p.id}))));
+    const allTags = computed(()=>{const s=new Set();curPl.value.forEach(v=>(v.tags||[]).forEach(t=>s.add(t)));return[...s].sort();});
+    const allTagsGlobal = computed(()=>{const s=new Set();allVideos.value.forEach(v=>(v.tags||[]).forEach(t=>s.add(t)));return[...s];});
+
+    const sortedPl = computed(()=>{
+      const ms=search.value.toLowerCase();
+      let arr=curPl.value.filter(v=>{
+        if(ms&&!v.title.toLowerCase().includes(ms)&&!(v.tags||[]).join(' ').toLowerCase().includes(ms)) return false;
+        if(filterCat.value&&v.cat!==filterCat.value) return false;
+        if(filterTag.value&&!(v.tags||[]).includes(filterTag.value)) return false;
+        return true;
+      });
+      if(sortMode.value==='pinned') arr=[...arr].sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0));
+      else if(sortMode.value==='az') arr=[...arr].sort((a,b)=>a.title.localeCompare(b.title));
+      else if(sortMode.value==='za') arr=[...arr].sort((a,b)=>b.title.localeCompare(a.title));
+      else if(sortMode.value==='newest') arr=[...arr].sort((a,b)=>new Date(b.at)-new Date(a.at));
+      else if(sortMode.value==='oldest') arr=[...arr].sort((a,b)=>new Date(a.at)-new Date(b.at));
+      else if(sortMode.value==='most') arr=[...arr].sort((a,b)=>(b.wc||0)-(a.wc||0));
+      else if(sortMode.value==='rating') arr=[...arr].sort((a,b)=>(b.rating||0)-(a.rating||0));
+      return arr;
+    });
+
+    const curVideo = computed(()=>allVideos.value.find(v=>v.id===curId.value)||null);
+    const curUrl   = computed(()=>curVideo.value?.url||null);
+    const histDisplay = computed(()=>[...hist.value].reverse().slice(0,120));
+    const queueVideos = computed(()=>queue.value.map(id=>allVideos.value.find(v=>v.id===id)).filter(Boolean));
+    const totalWatched = computed(()=>allVideos.value.reduce((s,v)=>s+(v.wc||0),0));
+    const watchedCount = computed(()=>allVideos.value.filter(v=>v.watched).length);
+    const avgRating = computed(()=>{const r=allVideos.value.filter(v=>v.rating);return r.length?(r.reduce((s,v)=>s+v.rating,0)/r.length).toFixed(1):'—';});
+    const topWatched = computed(()=>[...allVideos.value].filter(v=>v.wc).sort((a,b)=>(b.wc||0)-(a.wc||0)).slice(0,8));
+    const topRated   = computed(()=>[...allVideos.value].filter(v=>v.rating).sort((a,b)=>(b.rating||0)-(a.rating||0)).slice(0,8));
+    const topTags    = computed(()=>{const m={};allVideos.value.forEach(v=>(v.tags||[]).forEach(t=>m[t]=(m[t]||0)+1));return Object.entries(m).map(([tag,count])=>({tag,count})).sort((a,b)=>b.count-a.count).slice(0,10);});
+
+    /* HELPERS */
+    function catName(id){if(!id)return '';for(const pl of playlists.value){const c=pl.cats.find(c=>c.id===id);if(c)return c.name;}return '';}
+    function starStr(r){r=r||0;return'★'.repeat(r)+'☆'.repeat(5-r);}
+    function queueIdx(id){const i=queue.value.indexOf(id);return i>=0?i+1:0;}
+    function plWatchedPct(plId){const pl=playlists.value.find(p=>p.id===plId);if(!pl||!pl.videos.length)return 0;return Math.round(pl.videos.filter(v=>v.watched).length/pl.videos.length*100);}
+    function globalResults(plId){const ms=search.value.toLowerCase();if(!ms)return[];return(playlists.value.find(p=>p.id===plId)?.videos||[]).filter(v=>v.title.toLowerCase().includes(ms)||(v.tags||[]).join(' ').toLowerCase().includes(ms));}
+    function highlight(txt){if(!search.value)return txt;const r=new RegExp('('+search.value.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi');return txt.replace(r,'<mark>$1</mark>');}
+
+    function toast(msg,type='inf',dur=2600){
+      const id=uid();toasts.value.push({id,msg,type,hide:false});
+      setTimeout(()=>{const t=toasts.value.find(x=>x.id===id);if(t)t.hide=true;},dur);
+      setTimeout(()=>{toasts.value=toasts.value.filter(x=>x.id!==id);},dur+350);
+    }
+
+    /* PERSISTENCE */
+    function snapshot(){return{v:'5',savedAt:new Date().toISOString(),playlists:playlists.value,hist:hist.value,theme:theme.value,sortMode:sortMode.value,curPlId:curPlId.value,settings:{...settings},viewMode:viewMode.value};}
+    async function save(){
+      const d=snapshot();
+      try{localStorage.setItem('vp5',JSON.stringify(d));}catch{toast('Gagal simpan localStorage','err');}
+      if(FSA.handle){const ok=await FSA.write(d);if(!ok){toast('⚠ File terputus!','err');fsaHandle.value=null;}}
+    }
+    function load(){try{const raw=localStorage.getItem('vp5');if(raw)applyData(JSON.parse(raw),false);}catch{}}
+    function applyData(d,doSave=true){
+      if(!d)return;
+      if(Array.isArray(d.playlists)&&d.playlists.length){
+        playlists.value=d.playlists.map(pl=>({id:pl.id||uid(),name:pl.name||'Playlist',cats:pl.cats||[],videos:(pl.videos||[]).map(v=>({wc:0,thumb:'',notes:'',tags:[],rating:0,pinned:false,watched:false,progress:0,dur:'',...v}))}));
+      }
+      if(Array.isArray(d.hist))hist.value=d.hist;
+      if(d.theme)theme.value=d.theme;
+      if(d.sortMode)sortMode.value=d.sortMode;
+      if(d.viewMode)viewMode.value=d.viewMode;
+      if(d.settings)Object.assign(settings,d.settings);
+      const plIds=playlists.value.map(p=>p.id);
+      curPlId.value=(d.curPlId&&plIds.includes(d.curPlId))?d.curPlId:plIds[0];
+      if(settings.accent)applyAccent(settings.accent,false);
+      if(doSave)save();
+    }
+
+    /* ACCENT */
+    function applyAccent(val,persist=true){
+      settings.accent=val;
+      document.documentElement.style.setProperty('--acc',val);
+      if(persist)save();
+    }
+
+    /* PLAYLIST */
+    function switchPl(id){curPlId.value=id;search.value='';filterCat.value='';filterTag.value='';globalSearch.value=false;}
+    function addPlaylist(){const name=prompt('Nama playlist baru:');if(!name?.trim())return;const pl={id:uid(),name:name.trim(),cats:[],videos:[]};playlists.value.push(pl);curPlId.value=pl.id;save();}
+    function askDelPl(){confirm.title='Hapus Playlist';confirm.msg=`Hapus playlist "${curPlaylist.value?.name}"? Semua ${curPl.value.length} video akan ikut terhapus.`;confirm.cb=()=>{playlists.value=playlists.value.filter(p=>p.id!==curPlId.value);curPlId.value=playlists.value[0]?.id||'';save();toast('Playlist dihapus','ok');};ovConfirm.value=true;}
+    function renamePl(pl){renamePlId.value=pl.id;renameVal.value=pl.name;ovRename.value=true;nextTick(()=>renameRef.value?.focus());}
+    function doRename(){if(!renameVal.value.trim())return;const pl=playlists.value.find(p=>p.id===renamePlId.value);if(pl){pl.name=renameVal.value.trim();save();}ovRename.value=false;}
+
+    /* VIDEO OPS */
+    function openAdd(){editId.value='';Object.assign(form,emptyForm());form.plId=curPlId.value;tagInput.value='';ovVideo.value=true;nextTick(()=>titleRef.value?.focus());}
+    function openEdit(id){const v=allVideos.value.find(x=>x.id===id);if(!v)return;editId.value=id;Object.assign(form,{title:v.title,embed:v.url,plId:v.plId,cat:v.cat||'',tags:[...(v.tags||[])],rating:v.rating||0,thumb:v.thumb||'',notes:v.notes||'',dur:v.dur||''});tagInput.value='';ovVideo.value=true;nextTick(()=>titleRef.value?.focus());}
+    function saveVideo(){
+      if(!form.title.trim()){toast('Judul wajib!','err');return;}
+      const url=parseEmbed(form.embed);if(!url){toast('URL/embed tidak valid!','err');return;}
+      if(editId.value){
+        for(const pl of playlists.value){const idx=pl.videos.findIndex(v=>v.id===editId.value);if(idx>=0){if(form.plId!==pl.id){const[v]=pl.videos.splice(idx,1);Object.assign(v,{title:form.title.trim(),url,cat:form.cat,tags:[...form.tags],rating:form.rating,thumb:form.thumb,notes:form.notes,dur:form.dur});const tgt=playlists.value.find(p=>p.id===form.plId);if(tgt)tgt.videos.push(v);}else Object.assign(pl.videos[idx],{title:form.title.trim(),url,cat:form.cat,tags:[...form.tags],rating:form.rating,thumb:form.thumb,notes:form.notes,dur:form.dur});break;}}toast('Video diperbarui','ok');
+      }else{if(allVideos.value.some(v=>v.url===url)){toast('URL duplikat!','err');return;}const tgt=playlists.value.find(p=>p.id===form.plId);if(!tgt)return;tgt.videos.push({id:uid(),title:form.title.trim(),url,cat:form.cat,tags:[...form.tags],rating:form.rating,thumb:form.thumb,notes:form.notes,dur:form.dur,at:new Date().toISOString(),wc:0,pinned:false,watched:false,progress:0});toast('Video ditambahkan','ok');}
+      ovVideo.value=false;save();
+    }
+    function askDel(id){const v=allVideos.value.find(x=>x.id===id);confirm.title='Hapus Video';confirm.msg=`Hapus "${v?.title}"?`;confirm.cb=()=>{for(const pl of playlists.value){const i=pl.videos.findIndex(v=>v.id===id);if(i>=0){pl.videos.splice(i,1);break;}}if(curId.value===id)curId.value='';queue.value=queue.value.filter(x=>x!==id);save();toast('Dihapus','ok');};ovConfirm.value=true;}
+    function duplicateVideo(id){const src=allVideos.value.find(x=>x.id===id);if(!src)return;const tgt=playlists.value.find(p=>p.id===src.plId);if(!tgt)return;tgt.videos.push({...src,id:uid(),title:src.title+' (kopi)',at:new Date().toISOString(),wc:0,pinned:false,watched:false,progress:0});save();toast('Video diduplikat','ok');}
+    function togglePin(id){for(const pl of playlists.value){const v=pl.videos.find(x=>x.id===id);if(v){v.pinned=!v.pinned;save();return;}}}
+    function toggleWatched(id){for(const pl of playlists.value){const v=pl.videos.find(x=>x.id===id);if(v){v.watched=!v.watched;save();return;}}}
+    function markWatched(){if(!curId.value)return;toggleWatched(curId.value);toast(curVideo.value?.watched?'✓ Ditandai sudah ditonton':'Ditandai belum ditonton','ok');}
+
+    /* PLAY */
+    function play(id){
+      cancelAutoplay();
+      const v=allVideos.value.find(x=>x.id===id);if(!v)return;
+      curId.value=id;
+      for(const pl of playlists.value){const vx=pl.videos.find(x=>x.id===id);if(vx){vx.wc=(vx.wc||0)+1;break;}}
+      hist.value.push({id,title:v.title,at:new Date().toISOString(),plName:playlists.value.find(p=>p.id===v.plId)?.name||''});
+      if(hist.value.length>500)hist.value=hist.value.slice(-500);
+      save();
+    }
+    function go(dir){
+      const pl=sortedPl.value;if(!pl.length)return;
+      if(queue.value.length&&dir===1){playFromQueue(0);return;}
+      let idx=pl.findIndex(v=>v.id===curId.value);
+      if(shuffle.value)idx=Math.floor(Math.random()*pl.length);
+      else idx=(idx+dir+pl.length)%pl.length;
+      play(pl[idx].id);
+    }
+    function onVIClick(v,e){if(selMode.value){toggleSel(v.id);return;}play(v.id);}
+    function jumpToVideo(id){const v=allVideos.value.find(x=>x.id===id);if(!v)return;const pl=playlists.value.find(p=>p.id===v.plId);if(pl){curPlId.value=pl.id;activeTab.value='playlist';}play(id);}
+
+    /* AUTOPLAY */
+    function scheduleAutoplay(){
+      if(!settings.autoplayNext)return;
+      const pl=sortedPl.value;if(!pl.length)return;
+      let nextId='',nextTitle='';
+      if(queue.value.length){nextId=queue.value[0];nextTitle=allVideos.value.find(v=>v.id===nextId)?.title||'';}
+      else{const idx=pl.findIndex(v=>v.id===curId.value);if(idx<0)return;const ni=(idx+1)%pl.length;if(ni===0&&!loop.value)return;nextId=pl[ni].id;nextTitle=pl[ni].title;}
+      if(!nextId||nextId===curId.value)return;
+      autoplay.active=true;autoplay.secs=5;autoplay.nextId=nextId;autoplay.nextTitle=nextTitle;
+      autoplay.timer=setInterval(()=>{autoplay.secs--;if(autoplay.secs<=0){clearInterval(autoplay.timer);autoplay.active=false;if(queue.value.length)playFromQueue(0);else play(nextId);}},1000);
+    }
+    function cancelAutoplay(){clearInterval(autoplay.timer);autoplay.active=false;}
+    function doAutoplayNow(){cancelAutoplay();if(queue.value.length)playFromQueue(0);else play(autoplay.nextId);}
+
+    /* QUEUE */
+    function addToQueue(id){if(!queue.value.includes(id)){queue.value.push(id);toast('Ditambah ke queue','ok');}else toast('Sudah ada di queue','inf');}
+    function playFromQueue(i){const id=queue.value[i];queue.value.splice(i,1);play(id);}
+
+    /* TAGS */
+    function addTag(){const t=tagInput.value.trim().toLowerCase().replace(/\s+/g,'-');if(t&&!form.tags.includes(t))form.tags.push(t);tagInput.value='';}
+    function backspaceTag(){if(!tagInput.value&&form.tags.length)form.tags.pop();}
+    function addBTag(){const t=btagInput.value.trim().toLowerCase().replace(/\s+/g,'-');if(t&&!batchTags.value.includes(t))batchTags.value.push(t);btagInput.value='';}
+
+    /* RATING */
+    function quickRate(id){for(const pl of playlists.value){const vx=pl.videos.find(x=>x.id===id);if(vx){vx.rating=(vx.rating||0)>=5?0:(vx.rating||0)+1;save();return;}}}
+
+    /* BATCH */
+    function clearSel(){selected.value=new Set();}
+    function toggleSel(id){const s=new Set(selected.value);s.has(id)?s.delete(id):s.add(id);selected.value=s;}
+    function batchAddQueue(){selected.value.forEach(id=>{if(!queue.value.includes(id))queue.value.push(id);});toast(`${selected.value.size} ditambahkan ke queue`,'ok');clearSel();}
+    function batchDelete(){confirm.title='Hapus Banyak Video';confirm.msg=`Hapus ${selected.value.size} video?`;confirm.cb=()=>{const ids=new Set(selected.value);for(const pl of playlists.value)pl.videos=pl.videos.filter(v=>!ids.has(v.id));if(ids.has(curId.value))curId.value='';queue.value=queue.value.filter(id=>!ids.has(id));clearSel();save();toast('Video dihapus','ok');};ovConfirm.value=true;}
+    function doBatchMove(){if(!batchTarget.value){toast('Pilih playlist tujuan!','err');return;}const tgt=playlists.value.find(p=>p.id===batchTarget.value);if(!tgt)return;const ids=new Set(selected.value);for(const pl of playlists.value){if(pl.id===batchTarget.value)continue;const moved=pl.videos.filter(v=>ids.has(v.id));pl.videos=pl.videos.filter(v=>!ids.has(v.id));tgt.videos.push(...moved);}clearSel();ovBatchMove.value=false;save();toast(`${ids.size} video dipindahkan`,'ok');}
+    function doBatchTag(){if(!batchTags.value.length){toast('Tambahkan minimal 1 tag!','err');return;}const ids=new Set(selected.value);for(const pl of playlists.value){for(const v of pl.videos){if(ids.has(v.id)){v.tags=v.tags||[];batchTags.value.forEach(t=>{if(!v.tags.includes(t))v.tags.push(t);});}}}clearSel();batchTags.value=[];ovBatchTag.value=false;save();toast('Tag ditambahkan ke video terpilih','ok');}
+    function openBatchTag(){ovBatchTag.value=true;batchTags.value=[];btagInput.value='';}
+
+    /* CONTEXT MENU */
+    function openCtx(v,e){ctx.show=true;ctx.v=v;const pad=8;ctx.x=Math.min(e.clientX,window.innerWidth-190);ctx.y=Math.min(e.clientY,window.innerHeight-280);}
+    function closeCtx(){ctx.show=false;}
+    function copyVideoUrl(url){navigator.clipboard?.writeText(url).then(()=>toast('URL disalin!','ok')).catch(()=>toast('Gagal salin','err'));}
+
+    /* CATEGORIES */
+    function manageCats(){ovCat.value=true;nextTick(()=>catIn.value?.focus());}
+    function addCat(){const name=newCatName.value.trim();if(!name)return;const pl=playlists.value.find(p=>p.id===curPlId.value);if(!pl)return;if(pl.cats.some(c=>c.name.toLowerCase()===name.toLowerCase())){toast('Kategori sudah ada!','err');return;}pl.cats.push({id:uid(),name});newCatName.value='';save();}
+    function removeCat(plId,catId){const pl=playlists.value.find(p=>p.id===plId);if(!pl)return;pl.cats=pl.cats.filter(c=>c.id!==catId);pl.videos.forEach(v=>{if(v.cat===catId)v.cat='';});save();}
+
+    /* BULK ADD */
+    function openBulk(){bulk.input='';bulk.count=0;bulk.prefix='Video';bulk.start=curPl.value.length+1;bulk.plId=curPlId.value;bulk.cat='';ovBulk.value=true;}
+    function detectUrls(text){return text.split('\n').map(l=>l.trim()).filter(Boolean).map(parseEmbed).filter(u=>u);}
+    function doBulkAdd(){
+      const urls=detectUrls(bulk.input);if(!urls.length){toast('Tidak ada URL valid!','err');return;}
+      const tgt=playlists.value.find(p=>p.id===bulk.plId);if(!tgt)return;
+      const ex=new Set(allVideos.value.map(v=>v.url));
+      let added=0,skipped=0;
+      urls.forEach((url,i)=>{if(ex.has(url)){skipped++;return;}tgt.videos.push({id:uid(),title:`${bulk.prefix||'Video'} ${(bulk.start||1)+added}`,url,cat:bulk.cat||'',tags:[],rating:0,thumb:'',notes:'',dur:'',at:new Date().toISOString(),wc:0,pinned:false,watched:false,progress:0});added++;});
+      ovBulk.value=false;save();toast(`${added} ditambahkan${skipped?` · ${skipped} duplikat dilewati`:''}`,'ok');
+    }
+
+    /* IMPORT/EXPORT */
+    function doExport(){const a=document.createElement('a');a.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(snapshot(),null,2));a.download='videopro-v5.json';a.click();}
+    function trigImport(){document.getElementById('fileIn').click();}
+    function handleImport(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{applyData(JSON.parse(ev.target.result));toast('Data diimport','ok');}catch{toast('File tidak valid','err');}};r.readAsText(f);e.target.value='';}
+
+    /* CONFIRM */
+    function doConfirm(){ovConfirm.value=false;confirm.cb?.();confirm.cb=null;}
+    function askClearAll(){confirm.title='Hapus Semua Data';confirm.msg='Semua playlist, video, dan riwayat akan dihapus!';confirm.cb=()=>{playlists.value=[defaultPl()];curPlId.value=playlists.value[0].id;hist.value=[];queue.value=[];curId.value='';save();toast('Semua data dihapus','ok');};ovConfirm.value=true;}
+
+    /* FSA */
+    async function doOpenFile(){const data=await FSA.openExisting();if(!data){toast('Dibatalkan','inf');return;}applyData(data);fsaHandle.value=FSA.handle;toast(`✓ Dimuat dari "${FSA.handle.name}"`,'ok');}
+    async function doNewFile(){const ok=await FSA.createNew(snapshot());if(!ok){toast('Dibatalkan','inf');return;}fsaHandle.value=FSA.handle;toast(`✓ "${FSA.handle.name}" terhubung`,'ok');}
+    async function doUnlinkFile(){await FSA.unlink();fsaHandle.value=null;toast('File diputus','inf');}
+    async function doResume(){resumeBanner.value=false;const data=await FSA.resumePending();if(data?.playlists){applyData(data);fsaHandle.value=FSA.handle;toast(`✓ Dimuat dari "${FSA.handle.name}"`,'ok');}else toast('Izin ditolak','inf');}
+
+    /* MISC */
+    function copyUrl(){if(!curUrl.value){toast('Tidak ada video aktif','err');return;}navigator.clipboard?.writeText(curUrl.value).then(()=>toast('URL disalin!','ok')).catch(()=>toast('Gagal','err'));}
+    function toggleFS(){const el=psRef.value;if(!el)return;if(!document.fullscreenElement)el.requestFullscreen?.();else document.exitFullscreen?.();}
+    function doDrop(targetId){if(drag.src===targetId)return;const pl=playlists.value.find(p=>p.id===curPlId.value);if(!pl)return;const a=pl.videos.findIndex(v=>v.id===drag.src),b=pl.videos.findIndex(v=>v.id===targetId);if(a<0||b<0)return;const[item]=pl.videos.splice(a,1);pl.videos.splice(b,0,item);drag.src='';drag.over='';save();}
+    function startResize(e){resizing.value=true;const sx=e.clientX,sw=sidebarW.value;const mv=ev=>sidebarW.value=Math.max(180,Math.min(540,sw+ev.clientX-sx));const up=()=>{resizing.value=false;window.removeEventListener('mousemove',mv);window.removeEventListener('mouseup',up);};window.addEventListener('mousemove',mv);window.addEventListener('mouseup',up);}
+
+    /* KEYBOARD */
+    function onKey(e){
+      const tag=e.target.tagName;
+      if(['INPUT','TEXTAREA','SELECT'].includes(tag))return;
+      const k=e.key;
+      if(k==='ArrowLeft')go(-1);
+      if(k==='ArrowRight')go(1);
+      if(k==='f'||k==='F')toggleFS();
+      if(k==='l'||k==='L')loop.value=!loop.value;
+      if(k==='s'||k==='S')shuffle.value=!shuffle.value;
+      if(k==='a'||k==='A'){settings.autoplayNext=!settings.autoplayNext;toast('Auto-play: '+(settings.autoplayNext?'ON':'OFF'),'ok',1400);}
+      if(k==='w'||k==='W')markWatched();
+      if(k==='g'||k==='G'){viewMode.value=viewMode.value==='list'?'grid':'list';toast('View: '+viewMode.value,'ok',1200);}
+      if(k==='n'||k==='N')openAdd();
+      if(k==='b'||k==='B')openBulk();
+      if(k==='q'||k==='Q')activeTab.value='queue';
+      if(k==='/')globalSearch.value=!globalSearch.value;
+      if(k==='?')ovHelp.value=true;
+      if(k==='\\')sidebarOff.value=!sidebarOff.value;
+      if(k==='Escape'){
+        if(autoplay.active){cancelAutoplay();return;}
+        if(ctx.show){closeCtx();return;}
+        [ovVideo,ovBulk,ovCat,ovConfirm,ovHelp,ovRename,ovSettings,ovBatchMove,ovBatchTag].forEach(r=>r.value=false);
+      }
+    }
+
+    /* WATCHERS */
+    watch(theme,v=>document.body.classList.toggle('light',v==='light'));
+    watch([playlists,hist,theme,sortMode,curPlId,viewMode],()=>save(),{deep:true});
+    watch(()=>settings.autoplayNext,v=>{if(!v)cancelAutoplay();});
+    watch(curId,(nv,ov)=>{if(nv&&nv!==ov&&ov)scheduleAutoplay();});
+    watch(search,v=>{if(v.length>0&&settings.globalSearchDefault)globalSearch.value=true;});
+
+    /* INIT */
+    onMounted(async()=>{
+      load();
+      document.getElementById('fileIn').addEventListener('change',handleImport);
+      document.addEventListener('keydown',onKey);
+      if(settings.accent)applyAccent(settings.accent,false);
+      if(!playlists.value.find(p=>p.id===curPlId.value))curPlId.value=playlists.value[0]?.id||'';
+      if(FSA.supported){
+        const result=await FSA.tryRestore();
+        if(result==='pending')resumeBanner.value=true;
+        else if(result?.playlists){applyData(result,false);fsaHandle.value=FSA.handle;toast(`✓ Auto-dimuat dari "${FSA.handle.name}"`,'ok');}
+        else if(FSA.handle)fsaHandle.value=FSA.handle;
+      }
+    });
+
+    return {
+      playlists,curPlId,hist,queue,theme,sortMode,search,filterCat,filterTag,showFilter,
+      activeTab,sidebarOff,sidebarW,resizing,drag,shuffle,loop,curId,viewMode,globalSearch,
+      resumeBanner,toasts,selMode,selected,batchTarget,batchTags,btagInput,
+      settings,accentColors,autoplay,ctx,
+      ovVideo,ovBulk,ovCat,ovConfirm,ovRename,ovSettings,ovHelp,ovBatchMove,ovBatchTag,
+      editId,form,tagInput,bulk,newCatName,confirm,renameVal,renamePlId,
+      titleRef,tagIn,catIn,renameRef,vlRef,psRef,
+      fsaSupported,fsaHandle,fsaPendingName,
+      curPl,curPlaylist,curCats,formCats,bulkCats,allVideos,allTags,allTagsGlobal,
+      sortedPl,curVideo,curUrl,histDisplay,queueVideos,
+      totalWatched,watchedCount,avgRating,topWatched,topRated,topTags,
+      switchPl,addPlaylist,askDelPl,renamePl,doRename,
+      openAdd,openEdit,saveVideo,askDel,duplicateVideo,togglePin,toggleWatched,markWatched,
+      play,go,onVIClick,jumpToVideo,scheduleAutoplay,cancelAutoplay,doAutoplayNow,
+      addToQueue,playFromQueue,addTag,backspaceTag,addBTag,quickRate,
+      clearSel,toggleSel,batchAddQueue,batchDelete,doBatchMove,doBatchTag,openBatchTag,
+      openCtx,closeCtx,copyVideoUrl,manageCats,addCat,removeCat,
+      openBulk,detectUrls,doBulkAdd,doExport,trigImport,
+      doConfirm,askClearAll,doOpenFile,doNewFile,doUnlinkFile,doResume,
+      copyUrl,toggleFS,doDrop,startResize,
+      onKey,catName,starStr,queueIdx,plWatchedPct,globalResults,highlight,fmtD,applyAccent,
+    };
+  }
+}).mount('#app');
+</script>
+</body>
+</html>
